@@ -47,7 +47,7 @@
 brew install ryware/tap/headroom
 ```
 
-![Headroom treemap of a home folder colored by file age](Screenshots/treemap.jpeg)
+![Headroom treemap of a home folder colored by deletion safety: safe caches in green, data to check first in amber, items never to delete in red](Screenshots/treemap.jpeg)
 
 Headroom turns a crowded drive into an understandable map. Scan a folder or disk, identify the largest files and developer caches, inspect what is safe to remove, and clean up without leaving the app.
 
