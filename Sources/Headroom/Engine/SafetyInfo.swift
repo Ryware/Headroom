@@ -240,67 +240,65 @@ enum SafetyKB {
 
     // MARK: Lookup
 
-    static func info(for node: FileNode) -> SafetyInfo {
-        let home = NSHomeDirectory()
-        let path = node.path
+    private static let homePrefix = NSHomeDirectory() + "/"
+    private static let absoluteIndex = Dictionary(absolutePrefixes, uniquingKeysWith: { first, _ in first })
+    private static let bundleRule = Rule(level: .caution, what: "Application or bundle.",
+                                         advice: "Uninstall through the app's own uninstaller or by dragging to Trash if you no longer use it.")
 
-        // 1. Home-relative exact match, longest first, on the node and its ancestors.
-        if path.hasPrefix(home + "/") {
-            let rel = String(path.dropFirst(home.count + 1))
-            if let r = homePaths[rel] {
-                return SafetyInfo(level: r.level, what: r.what, advice: r.advice, source: "~/" + rel)
+    /// Which rule matched. Kept as parts so `level(for:)` never builds strings.
+    private enum Source {
+        case home(String), prefix(String), folder(String), ext(String), bundle
+        var text: String {
+            switch self {
+            case .home(let rel): return "~/" + rel
+            case .prefix(let p): return p
+            case .folder(let name): return name + "/"
+            case .ext(let ext): return "." + ext
+            case .bundle: return "bundle"
             }
         }
-
-        // 2. Absolute prefixes (exact folder).
-        for (prefix, r) in absolutePrefixes where path == prefix {
-            return SafetyInfo(level: r.level, what: r.what, advice: r.advice, source: prefix)
-        }
-
-        // 3. Folder name.
-        if node.isDirectory, let r = folderNames[node.name] {
-            return SafetyInfo(level: r.level, what: r.what, advice: r.advice, source: node.name + "/")
-        }
-
-        // 4. File extension.
-        if !node.isDirectory || node.isPackage {
-            let ext = (node.name as NSString).pathExtension.lowercased()
-            if let r = extensions[ext] {
-                return SafetyInfo(level: r.level, what: r.what, advice: r.advice, source: "." + ext)
-            }
-            if node.isPackage {
-                return SafetyInfo(level: .caution, what: "Application or bundle.", advice: "Uninstall through the app's own uninstaller or by dragging to Trash if you no longer use it.", source: "bundle")
-            }
-        }
-
-        // 5. Inherit from the nearest known ancestor, degraded one step so 'safe' parents
-        //    still make you look (a file deep inside ~/Library/Caches is safe; inside
-        //    Application Support it stays 'caution').
-        var p = node.parent
-        while let anc = p {
-            let ai = info(forAncestor: anc)
-            if ai.level != .unknown {
-                return SafetyInfo(level: ai.level, what: "Inside " + (ai.source.isEmpty ? anc.name : ai.source) + " — " + ai.what,
-                                  advice: ai.advice, source: ai.source)
-            }
-            p = anc.parent
-        }
-        return .unknown
     }
 
-    /// Non-recursive lookup used when walking up.
-    private static func info(forAncestor node: FileNode) -> SafetyInfo {
-        let home = NSHomeDirectory()
-        if node.path.hasPrefix(home + "/") {
-            let rel = String(node.path.dropFirst(home.count + 1))
-            if let r = homePaths[rel] { return SafetyInfo(level: r.level, what: r.what, advice: r.advice, source: "~/" + rel) }
+    static func info(for node: FileNode) -> SafetyInfo {
+        guard let m = match(node) else { return .unknown }
+        let source = m.source.text
+        if m.inherited {
+            return SafetyInfo(level: m.rule.level, what: "Inside " + source + " — " + m.rule.what, advice: m.rule.advice, source: source)
         }
-        for (prefix, r) in absolutePrefixes where node.path == prefix {
-            return SafetyInfo(level: r.level, what: r.what, advice: r.advice, source: prefix)
+        return SafetyInfo(level: m.rule.level, what: m.rule.what, advice: m.rule.advice, source: source)
+    }
+
+    /// Just the level: what colour-coding needs, without the explanatory strings.
+    static func level(for node: FileNode) -> SafetyLevel {
+        match(node)?.rule.level ?? .unknown
+    }
+
+    private static func match(_ node: FileNode) -> (rule: Rule, source: Source, inherited: Bool)? {
+        if let m = directMatch(node, asAncestor: false) { return (m.rule, m.source, false) }
+        // Inherit from the nearest known ancestor: a file deep inside ~/Library/Caches is
+        // safe; inside Application Support it stays 'caution'.
+        var p = node.parent
+        while let anc = p {
+            if let m = directMatch(anc, asAncestor: true) { return (m.rule, m.source, true) }
+            p = anc.parent
         }
-        if let r = folderNames[node.name] {
-            return SafetyInfo(level: r.level, what: r.what, advice: r.advice, source: node.name + "/")
+        return nil
+    }
+
+    /// Rules in order: exact home-relative path, exact absolute path, folder name, then
+    /// (for files and bundles only, not when walking up) file extension.
+    private static func directMatch(_ node: FileNode, asAncestor: Bool) -> (rule: Rule, source: Source)? {
+        let path = node.path
+        if path.hasPrefix(homePrefix) {
+            let rel = String(path.dropFirst(homePrefix.count))
+            if let r = homePaths[rel] { return (r, .home(rel)) }
         }
-        return .unknown
+        if let r = absoluteIndex[path] { return (r, .prefix(path)) }
+        if asAncestor || node.isDirectory, let r = folderNames[node.name] { return (r, .folder(node.name)) }
+        guard !asAncestor, !node.isDirectory || node.isPackage else { return nil }
+        let ext = (node.name as NSString).pathExtension.lowercased()
+        if let r = extensions[ext] { return (r, .ext(ext)) }
+        if node.isPackage { return (bundleRule, .bundle) }
+        return nil
     }
 }

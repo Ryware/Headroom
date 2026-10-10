@@ -113,8 +113,12 @@ struct TreemapView: View {
     @State private var colorMode: TreemapColorMode = .category
     @State private var depth = 4
     @State private var hover: TreemapCell?
+    @State private var hoverInfo: SafetyInfo = .unknown
     @State private var hoverPoint: CGPoint = .zero
     @State private var cells: [TreemapCell] = []
+    /// One fill per cell, worked out when the layout or colour mode changes, never per frame.
+    @State private var fills: [Color] = []
+    @State private var drawVersion = 0
     @State private var lastSize: CGSize = .zero
 
     private var current: FileNode? { focus ?? state.root }
@@ -125,16 +129,16 @@ struct TreemapView: View {
             Divider()
             GeometryReader { geo in
                 ZStack(alignment: .topLeading) {
-                    Canvas(rendersAsynchronously: false) { ctx, size in
-                        draw(in: ctx, size: size)
-                    }
+                    // Equatable on (version, selection): hovering doesn't repaint every cell.
+                    TreemapCanvas(cells: cells, fills: fills, selection: state.selection, version: drawVersion)
+                    .equatable()
                     .onContinuousHover { phase in
                         switch phase {
                         case .active(let p):
                             hoverPoint = p
-                            hover = hit(p)
+                            setHover(hit(p))
                         case .ended:
-                            hover = nil
+                            setHover(nil)
                         }
                     }
                     .gesture(TapGesture(count: 2).onEnded {
@@ -161,7 +165,14 @@ struct TreemapView: View {
                         }
                     }
 
-                    if let h = hover { tooltip(h, in: geo.size) }
+                    if let h = hover {
+                        RoundedRectangle(cornerRadius: 3)
+                            .stroke(.white.opacity(0.9), lineWidth: 1.5)
+                            .frame(width: h.rect.width, height: h.rect.height)
+                            .offset(x: h.rect.minX, y: h.rect.minY)
+                            .allowsHitTesting(false)
+                        tooltip(h, in: geo.size)
+                    }
                 }
                 .onAppear { relayout(geo.size) }
                 .onChange(of: geo.size) { _, s in relayout(s) }
@@ -169,6 +180,7 @@ struct TreemapView: View {
                 .onChange(of: depth) { _, _ in relayout(geo.size) }
                 .onChange(of: state.root?.id) { _, _ in focus = nil; relayout(geo.size) }
                 .onChange(of: state.lastDeleteResult?.freedBytes) { _, _ in relayout(geo.size) }
+                .onChange(of: colorMode) { _, _ in recolor() }
             }
             .background(Color(nsColor: .underPageBackgroundColor))
             Divider()
@@ -258,8 +270,21 @@ struct TreemapView: View {
 
     private func relayout(_ size: CGSize) {
         lastSize = size
-        guard let cur = current else { cells = []; return }
+        setHover(nil)
+        guard let cur = current else { cells = []; recolor(); return }
         cells = TreemapLayout.layout(root: cur, in: CGRect(origin: .zero, size: size).insetBy(dx: 2, dy: 2), maxDepth: depth)
+        recolor()
+    }
+
+    private func recolor() {
+        fills = cells.map { color(for: $0.node) }
+        drawVersion &+= 1
+    }
+
+    private func setHover(_ cell: TreemapCell?) {
+        guard cell?.id != hover?.id else { return }
+        hover = cell
+        hoverInfo = cell.map { SafetyKB.info(for: $0.node) } ?? .unknown
     }
 
     private func hit(_ p: CGPoint) -> TreemapCell? {
@@ -288,49 +313,13 @@ struct TreemapView: View {
             let days = node.modified.map { -$0.timeIntervalSinceNow / 86400 } ?? .infinity
             return ageBuckets.first { days < $0.days }?.color ?? ageBuckets.last!.color
         case .safety:
-            let l = SafetyKB.info(for: node).level
+            let l = SafetyKB.level(for: node)
             return l == .unknown ? Color.gray : l.color
         }
     }
 
-    private func draw(in ctx: GraphicsContext, size: CGSize) {
-        let selected = state.selection
-        for c in cells {
-            let base = color(for: c.node)
-            let r = c.rect
-            if c.isLeaf {
-                // Leaf: filled tile with a subtle bevel.
-                ctx.fill(Path(roundedRect: r.insetBy(dx: 0.5, dy: 0.5), cornerRadius: 2), with: .linearGradient(
-                    Gradient(colors: [base.opacity(0.95), base.opacity(0.6)]),
-                    startPoint: r.origin, endPoint: CGPoint(x: r.maxX, y: r.maxY)))
-                if r.width > 40 && r.height > 14 {
-                    let label = Text(c.node.name).font(.system(size: 10, weight: .medium)).foregroundColor(.white)
-                    ctx.draw(label, in: r.insetBy(dx: 4, dy: 2))
-                    if r.height > 30 {
-                        let sz = Text(c.node.allocatedSize.humanBytes).font(.system(size: 9)).foregroundColor(.white.opacity(0.85))
-                        ctx.draw(sz, in: CGRect(x: r.minX + 4, y: r.minY + 14, width: r.width - 8, height: 12))
-                    }
-                }
-            } else {
-                // Directory frame with header strip.
-                ctx.fill(Path(roundedRect: r, cornerRadius: 3), with: .color(base.opacity(0.18)))
-                ctx.stroke(Path(roundedRect: r.insetBy(dx: 0.5, dy: 0.5), cornerRadius: 3), with: .color(base.opacity(0.7)), lineWidth: 1)
-                let header = CGRect(x: r.minX + 3, y: r.minY + 1, width: r.width - 6, height: TreemapLayout.headerHeight)
-                let label = Text("\(c.node.name)  \(c.node.allocatedSize.humanBytes)")
-                    .font(.system(size: 10, weight: .semibold)).foregroundColor(.primary.opacity(0.85))
-                ctx.draw(label, in: header)
-            }
-            if selected.contains(c.id) {
-                ctx.stroke(Path(roundedRect: r, cornerRadius: 3), with: .color(.white), lineWidth: 2)
-            }
-        }
-        if let h = hover {
-            ctx.stroke(Path(roundedRect: h.rect, cornerRadius: 3), with: .color(.white.opacity(0.9)), lineWidth: 1.5)
-        }
-    }
-
     private func tooltip(_ c: TreemapCell, in size: CGSize) -> some View {
-        let info = SafetyKB.info(for: c.node)
+        let info = hoverInfo
         let w: CGFloat = 300
         let x = min(max(8, hoverPoint.x + 14), size.width - w - 8)
         let y = min(max(8, hoverPoint.y + 18), size.height - 120)
@@ -363,5 +352,51 @@ struct TreemapView: View {
         .shadow(radius: 6)
         .offset(x: x, y: y)
         .allowsHitTesting(false)
+    }
+}
+
+/// The map itself. Redraws only when the layout, colours or selection change.
+private struct TreemapCanvas: View, Equatable {
+    let cells: [TreemapCell]
+    let fills: [Color]
+    let selection: Set<FileNode.ID>
+    let version: Int
+
+    static func == (a: Self, b: Self) -> Bool { a.version == b.version && a.selection == b.selection }
+
+    var body: some View {
+        Canvas(rendersAsynchronously: false) { ctx, _ in draw(in: ctx) }
+    }
+
+    private func draw(in ctx: GraphicsContext) {
+        for (i, c) in cells.enumerated() {
+            let base = i < fills.count ? fills[i] : .gray
+            let r = c.rect
+            if c.isLeaf {
+                // Leaf: filled tile with a subtle bevel.
+                ctx.fill(Path(roundedRect: r.insetBy(dx: 0.5, dy: 0.5), cornerRadius: 2), with: .linearGradient(
+                    Gradient(colors: [base.opacity(0.95), base.opacity(0.6)]),
+                    startPoint: r.origin, endPoint: CGPoint(x: r.maxX, y: r.maxY)))
+                if r.width > 40 && r.height > 14 {
+                    let label = Text(c.node.name).font(.system(size: 10, weight: .medium)).foregroundColor(.white)
+                    ctx.draw(label, in: r.insetBy(dx: 4, dy: 2))
+                    if r.height > 30 {
+                        let sz = Text(c.node.allocatedSize.humanBytes).font(.system(size: 9)).foregroundColor(.white.opacity(0.85))
+                        ctx.draw(sz, in: CGRect(x: r.minX + 4, y: r.minY + 14, width: r.width - 8, height: 12))
+                    }
+                }
+            } else {
+                // Directory frame with header strip.
+                ctx.fill(Path(roundedRect: r, cornerRadius: 3), with: .color(base.opacity(0.18)))
+                ctx.stroke(Path(roundedRect: r.insetBy(dx: 0.5, dy: 0.5), cornerRadius: 3), with: .color(base.opacity(0.7)), lineWidth: 1)
+                let header = CGRect(x: r.minX + 3, y: r.minY + 1, width: r.width - 6, height: TreemapLayout.headerHeight)
+                let label = Text("\(c.node.name)  \(c.node.allocatedSize.humanBytes)")
+                    .font(.system(size: 10, weight: .semibold)).foregroundColor(.primary.opacity(0.85))
+                ctx.draw(label, in: header)
+            }
+            if selection.contains(c.id) {
+                ctx.stroke(Path(roundedRect: r, cornerRadius: 3), with: .color(.white), lineWidth: 2)
+            }
+        }
     }
 }

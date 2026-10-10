@@ -28,8 +28,9 @@ struct TreeView: View {
     private var header: some View {
         HStack {
             if let root = state.root {
-                Image(systemName: "internaldrive").foregroundStyle(.secondary)
-                Text(root.path).font(.callout).lineLimit(1).truncationMode(.middle)
+                Image(systemName: state.rootLocation?.symbol ?? "folder").foregroundStyle(.secondary)
+                Text(state.rootLocation?.summary ?? root.path).font(.callout).lineLimit(1).truncationMode(.middle)
+                    .help(root.path)
                 Text("· \(root.allocatedSize.humanBytes)").font(.callout).foregroundStyle(.secondary)
             }
             Spacer()

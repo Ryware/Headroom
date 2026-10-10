@@ -44,8 +44,17 @@ struct DeleteToast: View {
                 }
             }
             if !ok {
+                // Finder is allowed through by every antivirus and can ask for an admin password,
+                // so whatever Headroom could not remove, the user can finish there.
+                ForEach(result.blockedBy.prefix(2)) { suite in
+                    if let app = suite.appURL {
+                        Button("Open \(suite.name)") { NSWorkspace.shared.open(app) }
+                    }
+                }
+                Button("Reveal in Finder") { reveal() }
                 Button("Details") { showErrors = true }
                     .alert("Some items could not be removed", isPresented: $showErrors) {
+                        Button("How to Fix…") { NSWorkspace.shared.open(Deleter.trashHelpURL); dismiss() }
                         Button("OK") { dismiss() }
                     } message: {
                         Text(result.errors.prefix(8).map { "• \($0.path)\n  \($0.message)" }.joined(separator: "\n"))
@@ -68,6 +77,13 @@ struct DeleteToast: View {
     }
 
     private static func count(_ n: Int, _ noun: String) -> String { "\(n.formatted()) \(noun)\(n == 1 ? "" : "s")" }
+
+    private func reveal() {
+        let urls = result.errors.prefix(20).map { URL(fileURLWithPath: $0.path) }
+            .filter { FileManager.default.fileExists(atPath: $0.path) }
+        guard !urls.isEmpty else { return }
+        NSWorkspace.shared.activateFileViewerSelecting(urls)
+    }
 
     private func countUp() {
         let target = result.freedBytes

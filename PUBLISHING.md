@@ -157,3 +157,13 @@ Set `destination` to `upload` in `ExportOptions.plist` to upload directly once t
 - [ ] Submit for review.
 
 `asc_publish.py` needs `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH`, and `ASC_TOKEN_TOOL` (the compiled `asc_token` JWT helper). Keys live in the git-ignored `.secrets/` folder.
+
+## Homebrew
+
+Users install with `brew install ryware/tap/headroom`. The tap is the public repository [`Ryware/homebrew-tap`](https://github.com/Ryware/homebrew-tap), holding `Casks/headroom.rb`.
+
+The tap keeps itself up to date: its `Update Headroom cask` workflow runs every 3 hours (and on demand from its Actions tab). It reads Headroom's latest GitHub release, takes the DMG checksum from the `.sha256` asset, fills in `packaging/homebrew/headroom.rb` from this repository and commits the result. No token or secret is needed.
+
+Optional: to update the tap the moment a release is published instead of within 3 hours, add a fine-grained token with **Contents: Read and write** on `Ryware/homebrew-tap` to this repository as the Actions secret `HOMEBREW_TAP_TOKEN`; the release workflow then pushes the cask itself.
+
+Later, once the repository meets Homebrew's notability bar (about 75 stars), the cask can be submitted to the official `homebrew/cask` with `brew bump-cask-pr` so that `brew install headroom` works without the tap.

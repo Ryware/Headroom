@@ -5,8 +5,16 @@ struct CategoriesView: View {
     @EnvironmentObject var state: AppState
     @Environment(\.requestDelete) private var requestDelete
     @State private var selected: FileCategory?
+    @State private var hovered: FileCategory?
     @State private var items: [FileNode] = []
     @State private var itemSelection: Set<FileNode.ID> = []
+
+    private let onSelect: (FileCategory?) -> Void
+
+    init(initial: FileCategory? = nil, onSelect: @escaping (FileCategory?) -> Void = { _ in }) {
+        _selected = State(initialValue: initial)
+        self.onSelect = onSelect
+    }
 
     private struct Row: Identifiable {
         let category: FileCategory
@@ -28,7 +36,7 @@ struct CategoriesView: View {
                 Chart(rows) { row in
                     BarMark(x: .value("Size", row.bytes), y: .value("Category", row.category.title))
                         .foregroundStyle(row.category.color)
-                        .opacity(selected == nil || selected == row.category ? 1 : 0.35)
+                        .opacity(barOpacity(row.category))
                         .annotation(position: .trailing) {
                             Text(row.bytes.humanBytes).font(.caption).foregroundStyle(.secondary)
                         }
@@ -36,22 +44,50 @@ struct CategoriesView: View {
                 .chartXAxis {
                     AxisMarks { value in
                         AxisGridLine()
-                        AxisValueLabel { if let v = value.as(Int64.self) { Text(v.humanBytes) } }
+                        AxisValueLabel { if let v = value.as(Int64.self) { Text(v == 0 ? "0" : v.humanBytes) } }
                     }
                 }
                 .chartYAxis { AxisMarks { AxisValueLabel() } }
+                .chartOverlay { proxy in
+                    // The whole row is the target: label, bar and the empty space after a short bar.
+                    GeometryReader { geo in
+                        Rectangle().fill(.clear).contentShape(Rectangle())
+                            .onContinuousHover { phase in
+                                switch phase {
+                                case .active(let p):
+                                    hovered = category(at: p, proxy: proxy, geo: geo)
+                                    (hovered == nil ? NSCursor.arrow : NSCursor.pointingHand).set()
+                                case .ended:
+                                    hovered = nil
+                                    NSCursor.arrow.set()
+                                }
+                            }
+                            .onTapGesture { p in
+                                guard let cat = category(at: p, proxy: proxy, geo: geo) else { return }
+                                selected = selected == cat ? nil : cat
+                            }
+                    }
+                }
+                .animation(.easeOut(duration: 0.15), value: hovered)
+                .help("Click a bar to list the largest items in that category")
                 .frame(height: CGFloat(max(1, rows.count)) * 30 + 30)
 
-                List(rows, selection: $selected) { row in
-                    HStack {
-                        Image(systemName: row.category.symbol).foregroundStyle(row.category.color).frame(width: 20)
-                        Text(row.category.title)
-                        Spacer()
-                        Text(total > 0 ? Double(row.bytes) / Double(total) : 0, format: .percent.precision(.fractionLength(1)))
-                            .foregroundStyle(.secondary).monospacedDigit()
-                        Text(row.bytes.humanBytes).monospacedDigit().frame(width: 80, alignment: .trailing)
+                ScrollViewReader { scroller in
+                    List(rows, selection: $selected) { row in
+                        HStack {
+                            Image(systemName: row.category.symbol).foregroundStyle(row.category.color).frame(width: 20)
+                            Text(row.category.title)
+                            Spacer()
+                            Text(total > 0 ? Double(row.bytes) / Double(total) : 0, format: .percent.precision(.fractionLength(1)))
+                                .foregroundStyle(.secondary).monospacedDigit()
+                            Text(row.bytes.humanBytes).monospacedDigit().frame(width: 80, alignment: .trailing)
+                        }
+                        .tag(row.category)
+                        .id(row.category)
                     }
-                    .tag(row.category)
+                    .onChange(of: selected) { _, cat in
+                        if let cat { withAnimation { scroller.scrollTo(cat) } }
+                    }
                 }
             }
             .padding()
@@ -78,9 +114,21 @@ struct CategoriesView: View {
             }
             .frame(minWidth: 260)
         }
-        .onChange(of: selected) { _, cat in reload(cat) }
+        .onChange(of: selected) { _, cat in reload(cat); onSelect(cat) }
         .onChange(of: state.categoryTotals.count) { _, _ in reload(selected) }
         .onAppear { reload(selected) }
+    }
+
+    private func barOpacity(_ cat: FileCategory) -> Double {
+        if selected == nil || selected == cat { return 1 }
+        return hovered == cat ? 0.8 : 0.35   // a faded bar lifts on hover; a full one stays full
+    }
+
+    private func category(at point: CGPoint, proxy: ChartProxy, geo: GeometryProxy) -> FileCategory? {
+        guard let plot = proxy.plotFrame.map({ geo[$0] }),
+              point.y >= plot.minY, point.y <= plot.maxY,
+              let title: String = proxy.value(atY: point.y - plot.minY) else { return nil }
+        return rows.first { $0.category.title == title }?.category
     }
 
     private func reload(_ cat: FileCategory?) {

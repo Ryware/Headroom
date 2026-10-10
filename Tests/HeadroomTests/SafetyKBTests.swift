@@ -70,4 +70,32 @@ final class SafetyKBTests: XCTestCase {
         XCTAssertEqual(info.level, .unknown)
         XCTAssertFalse(info.advice.isEmpty)
     }
+
+    func testInheritedInfoNamesTheMatchedRule() {
+        let caches = node("\(home)/Library/Caches")
+        let file = node("\(home)/Library/Caches/blob", directory: false, parent: caches)
+        let info = SafetyKB.info(for: file)
+        XCTAssertEqual(info.source, "~/Library/Caches")
+        XCTAssertTrue(info.what.hasPrefix("Inside ~/Library/Caches — "))
+    }
+
+    func testLevelAgreesWithInfo() {
+        let library = node("\(home)/Library")
+        let support = node("\(home)/Library/Application Support", parent: library)
+        let app = node("\(home)/Library/Application Support/Foo", parent: support)
+        let modules = node("/work/app/node_modules")
+        let bundle = FileNode(url: URL(fileURLWithPath: "/Applications/Foo.app", isDirectory: true), name: "Foo.app",
+                              isDirectory: true, isSymlink: false, isPackage: true, allocatedSize: 1, logicalSize: 1,
+                              modified: nil, category: nil, parent: nil)
+        let nodes = [
+            library, support, app, modules, bundle,
+            node("\(home)/Library/Application Support/Foo/db.sqlite", directory: false, parent: app),
+            node("/work/app/node_modules/x/index.js", directory: false, parent: modules),
+            node("/System"), node("/x/backup.zip", directory: false), node("/x/notes.txt", directory: false),
+            node("/nowhere/mystery"),
+        ]
+        for n in nodes {
+            XCTAssertEqual(SafetyKB.level(for: n), SafetyKB.info(for: n).level, n.path)
+        }
+    }
 }

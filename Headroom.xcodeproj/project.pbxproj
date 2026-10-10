@@ -12,6 +12,7 @@
 		07D3FE973DAA860DD0ACD8CE /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0B5956A05089EFE78C8844 /* WelcomeView.swift */; };
 		08E17C08831AE3C4A5C215FD /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 410500A0DCA515C5FAC0F054 /* AppState.swift */; };
 		09DBC1698FF19DE85349F252 /* MenuBarPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79DFA748AA10257777C06896 /* MenuBarPanel.swift */; };
+		0C77797B13C3E9036545DFE9 /* SecuritySuites.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73DFD17EED422B93DB2838EA /* SecuritySuites.swift */; };
 		2C0ED81033D829D779E2CBA4 /* OutlineTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B774E3805205DC1D346F1F /* OutlineTreeView.swift */; };
 		2DC46D3C01156DC2EB0BCAE5 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51F5EA27271DC95203E232DC /* ContentView.swift */; };
 		2E5DACF58ED1F83B9A54B886 /* TreemapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF3C887BED9FD8749E7CBDA7 /* TreemapView.swift */; };
@@ -26,6 +27,7 @@
 		92DB3E69ADFF8178CA136126 /* IntroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CB1E99C0D93BACD18BC7890 /* IntroView.swift */; };
 		9855986ABDE60FD40B08167D /* SafetyInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD5054742935A01D9F7B33BF /* SafetyInfo.swift */; };
 		9CB88C71A34AEF286B2983C5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6E0735C605F87C57AB30D9AF /* Assets.xcassets */; };
+		A01F6098B6E69F21912071AF /* ScanLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 377C436D419A50E0B512AFBA /* ScanLocation.swift */; };
 		B38B7F40529F70F7C3AD9445 /* InspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F5CB9BB62F23049C6D4700 /* InspectorView.swift */; };
 		B3C7F1D7FC9C3DB02F7834AA /* Deleter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2705E344C505E364BCE29A5B /* Deleter.swift */; };
 		B6E54584D1C003F98347D665 /* Scanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C694AF0D3DB449E1AC3D8C8 /* Scanner.swift */; };
@@ -43,11 +45,13 @@
 		2705E344C505E364BCE29A5B /* Deleter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deleter.swift; sourceTree = "<group>"; };
 		279EAA045C9C8EA9DB5F47CC /* LargestFilesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LargestFilesView.swift; sourceTree = "<group>"; };
 		2C694AF0D3DB449E1AC3D8C8 /* Scanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scanner.swift; sourceTree = "<group>"; };
+		377C436D419A50E0B512AFBA /* ScanLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanLocation.swift; sourceTree = "<group>"; };
 		38EE102ECDB7224FF38F627F /* HeadroomApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadroomApp.swift; sourceTree = "<group>"; };
 		410500A0DCA515C5FAC0F054 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		51F5EA27271DC95203E232DC /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		66185088A090909D90F03490 /* DiskMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskMonitor.swift; sourceTree = "<group>"; };
 		6E0735C605F87C57AB30D9AF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		73DFD17EED422B93DB2838EA /* SecuritySuites.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecuritySuites.swift; sourceTree = "<group>"; };
 		7549075CA60F67BDCAD42D98 /* TreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TreeView.swift; sourceTree = "<group>"; };
 		77F5CB9BB62F23049C6D4700 /* InspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorView.swift; sourceTree = "<group>"; };
 		79DFA748AA10257777C06896 /* MenuBarPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPanel.swift; sourceTree = "<group>"; };
@@ -72,6 +76,7 @@
 				410500A0DCA515C5FAC0F054 /* AppState.swift */,
 				7F80E36FBFC3AA085582B909 /* FileCategory.swift */,
 				0266B1C6AB063EA30D34CA2C /* FileNode.swift */,
+				377C436D419A50E0B512AFBA /* ScanLocation.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -122,6 +127,7 @@
 				8A2DBBC5C77506F99C09B4CE /* Duplicates.swift */,
 				FD5054742935A01D9F7B33BF /* SafetyInfo.swift */,
 				2C694AF0D3DB449E1AC3D8C8 /* Scanner.swift */,
+				73DFD17EED422B93DB2838EA /* SecuritySuites.swift */,
 			);
 			path = Engine;
 			sourceTree = "<group>";
@@ -238,7 +244,9 @@
 				09DBC1698FF19DE85349F252 /* MenuBarPanel.swift in Sources */,
 				2C0ED81033D829D779E2CBA4 /* OutlineTreeView.swift in Sources */,
 				9855986ABDE60FD40B08167D /* SafetyInfo.swift in Sources */,
+				A01F6098B6E69F21912071AF /* ScanLocation.swift in Sources */,
 				B6E54584D1C003F98347D665 /* Scanner.swift in Sources */,
+				0C77797B13C3E9036545DFE9 /* SecuritySuites.swift in Sources */,
 				46440A725AE1B8AC4DDD6F6D /* TreeView.swift in Sources */,
 				2E5DACF58ED1F83B9A54B886 /* TreemapView.swift in Sources */,
 				07D3FE973DAA860DD0ACD8CE /* WelcomeView.swift in Sources */,
@@ -256,7 +264,7 @@
 				CODE_SIGN_ENTITLEMENTS = AppStore.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 8;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -265,7 +273,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.ryware.disktree;
 				PRODUCT_NAME = Headroom;
 				SDKROOT = macosx;
@@ -337,7 +345,7 @@
 				CODE_SIGN_ENTITLEMENTS = AppStore.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 8;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -346,7 +354,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.ryware.disktree;
 				PRODUCT_NAME = Headroom;
 				SDKROOT = macosx;

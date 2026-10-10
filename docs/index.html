@@ -334,6 +334,27 @@ h1{font-size:clamp(36px,5.2vw,68px);line-height:1.02;font-weight:600;letter-spac
 .dot.safe{background:var(--safe)}.dot.usually{background:var(--usually)}.dot.caution{background:var(--caution)}.dot.never{background:var(--never)}
 .wide-shot{max-width:1080px;margin:0 auto}
 @media (max-width:900px){.levels{grid-template-columns:1fr 1fr}}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.compare{border-top:1px solid var(--line)}
+.bars{display:grid;gap:12px;margin:0 0 32px;padding:0;list-style:none;max-width:760px}
+.bars li{display:grid;grid-template-columns:150px 1fr 64px;align-items:center;gap:14px;font-size:15px}
+.bars .track{height:14px;border-radius:7px;background:var(--accent-soft);overflow:hidden}
+.bars .fill{display:block;height:100%;width:var(--w);border-radius:7px;background:var(--fg-3);transform-origin:left;transition:transform 1s var(--ease)}
+.bars li.us .fill{background:var(--accent)}
+.bars li.us{font-weight:600}
+.bars .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--fg-2)}
+.bars li.us .val{color:var(--fg)}
+.compare .reveal:not(.in) .fill{transform:scaleX(0)}
+.cmp-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.cmp{width:100%;min-width:560px;border-collapse:collapse;font-size:14.5px}
+.cmp th,.cmp td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.cmp tr:last-child th,.cmp tr:last-child td{border-bottom:0}
+.cmp thead th{font-weight:600;color:var(--fg)}
+.cmp tbody th{font-weight:500;color:var(--fg-2)}
+.cmp td{color:var(--fg-2)}
+.cmp .us{color:var(--fg);background:var(--accent-soft)}
+.cmp-note{margin-top:16px;font-size:14px;color:var(--fg-3);max-width:80ch}
+@media (max-width:600px){.bars li{grid-template-columns:118px 1fr 52px;gap:10px;font-size:14px}}
 @media (max-width:520px){.levels{grid-template-columns:1fr}}
 
 /* install */
@@ -343,12 +364,23 @@ h1{font-size:clamp(36px,5.2vw,68px);line-height:1.02;font-weight:600;letter-spac
 .steps li span{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:600 14px/28px "Geist Mono",monospace;text-align:center}
 .steps strong{color:var(--fg)}
 .fine{margin-top:22px;font-size:14px;color:var(--fg-3)}
-@media (max-width:900px){.install-grid{grid-template-columns:1fr;gap:28px}}
+.brew{margin-top:22px}
+.brew-label{font-size:14px;color:var(--fg-2);margin-bottom:8px}
+.brew-label a{color:inherit}
+.brew-cmd{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;padding:10px 10px 10px 14px}
+.brew-cmd code{flex:1;min-width:0;background:none;padding:0;color:var(--fg);font-size:14px;overflow-x:auto;white-space:nowrap}
+.brew-cmd code::before{content:"$ ";color:var(--fg-3)}
+.brew-copy{flex:none;font:500 13px/1 inherit;font-family:inherit;color:var(--fg-2);background:transparent;border:1px solid var(--line-strong);border-radius:7px;padding:7px 10px;cursor:pointer}
+.brew-copy:hover{color:var(--fg)}
+.brew-or{margin-top:22px;font-size:14px;color:var(--fg-3)}
+.brew .fine code{white-space:nowrap}
+@media (max-width:520px){.brew-cmd{padding-left:12px}.brew-cmd code{font-size:12.5px}}
+@media (max-width:900px){.install-grid{grid-template-columns:minmax(0,1fr);gap:28px}}
 
 /* faq */
 .faq-grid{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:48px;align-items:start}
 .faq-intro p{margin-top:10px;color:var(--fg-2)}
-.faq-list details{border-top:1px solid var(--line)}
+.faq-list details{border-top:1px solid var(--line);scroll-margin-top:88px}
 .faq-list details:last-child{border-bottom:1px solid var(--line)}
 summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 0;font-weight:500;font-size:16.5px}
 summary::-webkit-details-marker{display:none}
@@ -412,9 +444,9 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
       "applicationCategory": "UtilitiesApplication",
       "applicationSubCategory": "Disk space analyzer",
       "operatingSystem": "macOS 14 Sonoma or later",
-      "softwareVersion": "1.0.3",
+      "softwareVersion": "1.0.5",
       "datePublished": "2026-09-30",
-      "dateModified": "2026-10-06",
+      "dateModified": "2026-10-07",
       "license": "https://opensource.org/licenses/MIT",
       "isAccessibleForFree": true,
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "description": "Free forever. All features included. No Pro tier, subscription, trial or in-app purchases." },
@@ -442,7 +474,7 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
       "totalTime": "PT5M",
       "tool": { "@type": "HowToTool", "name": "Headroom" },
       "step": [
-        { "@type": "HowToStep", "position": 1, "name": "Download and open Headroom", "text": "Get Headroom from the GitHub releases page, drag it to Applications and open it." },
+        { "@type": "HowToStep", "position": 1, "name": "Download and open Headroom", "text": "Run brew install ryware/tap/headroom in Terminal, or get the DMG from the GitHub releases page, drag Headroom to Applications and open it." },
         { "@type": "HowToStep", "position": 2, "name": "Scan a folder or your disk", "text": "Choose Scan Folder, Home or Startup Disk. Headroom reads allocated sizes in parallel and shows the result in seconds." },
         { "@type": "HowToStep", "position": 3, "name": "Explore the biggest items", "text": "Switch between the dashboard, folder tree, treemap, categories and largest files to see what uses the most space." },
         { "@type": "HowToStep", "position": 4, "name": "Check the safety badge", "text": "Each recognized item shows whether it is safe to delete, usually safe, needs caution or should never be removed, with a plain-language explanation." },
@@ -452,6 +484,8 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
     {
       "@type": "FAQPage",
       "mainEntity": [
+        { "@type": "Question", "name": "Can I install Headroom with Homebrew?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. Run brew install ryware/tap/headroom in Terminal. It installs the same signed, notarized app as the DMG. Update with brew upgrade headroom and uninstall with brew uninstall headroom." } },
         { "@type": "Question", "name": "Is there a Pro version of Headroom?",
           "acceptedAnswer": { "@type": "Answer", "text": "No. Headroom has no Pro tier, subscription, lifetime purchase, trial or in-app purchases. Every feature is free and unlocked for everyone: the treemap, one-click cleanup, developer deep scan, safety hints, Trash-first deletion and fast permanent deletion." } },
         { "@type": "Question", "name": "Is there a free Mac disk cleaner with no subscription?",
@@ -469,19 +503,25 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
         { "@type": "Question", "name": "What is the difference between Trash mode and Permanent mode?",
           "acceptedAnswer": { "@type": "Answer", "text": "Trash mode moves items to the macOS Trash so you can restore them until you empty it. Permanent mode removes them immediately using a fast parallel engine like rimraf and cannot be undone." } },
         { "@type": "Question", "name": "How fast is Headroom?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Headroom uses the macOS getattrlistbulk(2) system call and scans directories in parallel across all CPU cores. In testing it scanned a home folder with about 1.26 million files and 216,000 folders in roughly 20 seconds." } },
+          "acceptedAnswer": { "@type": "Answer", "text": "Headroom uses the macOS getattrlistbulk(2) system call and scans directories in parallel across all CPU cores. On an M3 Pro it scanned a home folder with about 1.07 million files and 167,000 folders (102 GB) in about 16 seconds, faster than Mole and DiskTree on the same folder." } },
         { "@type": "Question", "name": "Does Headroom send my data anywhere?",
           "acceptedAnswer": { "@type": "Answer", "text": "No. Scanning and analysis happen entirely on your Mac. Headroom has no account system, no analytics SDK and no cloud service." } },
         { "@type": "Question", "name": "Is there a WizTree or TreeSize alternative for Mac?",
           "acceptedAnswer": { "@type": "Answer", "text": "Headroom is a free, native Mac app in the same spirit as WizTree and TreeSize: a fast scan, a sortable size tree and a treemap. It adds safety explanations and one-click developer cleanup." } },
         { "@type": "Question", "name": "Is there a free alternative to DaisyDisk?",
           "acceptedAnswer": { "@type": "Answer", "text": "Headroom is a free, open-source option if you want a DaisyDisk-style visual map of your disk without paying. DaisyDisk is a paid app with a sunburst map; Headroom uses a treemap and a sortable folder tree, and adds a duplicate finder, safety explanations and developer cleanup." } },
+        { "@type": "Question", "name": "Is Headroom the same app as DiskTree?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. Headroom was called DiskTree before version 1.0, but it is not related to the DiskTree app sold at disktree.org. That DiskTree is a closed-source treemap app with a free tier and a paid Pro plan for cleanup. Headroom is free and open source, with cleanup, a duplicate finder and Safe / Caution / Never verdicts included. Scanning the same 102 GB home folder on an M3 Pro, Headroom took about 16 seconds and DiskTree 1.1.3 about 58." } },
+        { "@type": "Question", "name": "How is Headroom different from Mole?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Both are free and open source. Mole is a terminal cleaner whose mo analyze command shows disk usage; Headroom is a native app with a folder tree, treemap, duplicate finder and a Safe / Caution / Never verdict for each known folder. Scanning the same 102 GB home folder on an M3 Pro, Headroom finished a full scan in about 16 seconds and Mole in about 24, and Headroom listed every one of the 1.07 million files. Mole uses far less memory and answers repeat scans from a cache in about 4 seconds, and it also uninstalls apps and optimizes the system, which Headroom does not." } },
         { "@type": "Question", "name": "How is Headroom different from GrandPerspective?",
           "acceptedAnswer": { "@type": "Answer", "text": "Both are open source and both draw a treemap of your disk. GrandPerspective focuses on the treemap view. Headroom adds a sortable folder tree, category breakdown, duplicate finder, safety explanations for what you are about to delete, one-click developer cleanup and a menu bar monitor." } },
         { "@type": "Question", "name": "Is Headroom a free alternative to CleanMyMac?",
           "acceptedAnswer": { "@type": "Answer", "text": "For finding and freeing disk space, yes. Headroom covers disk analysis, large files, duplicates and cache and developer cleanup for free, with no subscription. It is not a full maintenance suite: it has no malware scanner, app uninstaller or performance tools." } },
         { "@type": "Question", "name": "What are the system requirements?",
-          "acceptedAnswer": { "@type": "Answer", "text": "macOS 14 Sonoma or newer on an Apple silicon or Intel Mac. Full Disk Access is only needed if you want to scan protected locations such as Mail, Messages and Safari data." } }
+          "acceptedAnswer": { "@type": "Answer", "text": "macOS 14 Sonoma or newer on an Apple silicon or Intel Mac. Full Disk Access is only needed if you want to scan protected locations such as Mail, Messages and Safari data." } },
+        { "@type": "Question", "name": "Headroom says it does not have permission to move a folder to the Trash. What now?",
+          "acceptedAnswer": { "@type": "Answer", "text": "This almost always comes from an antivirus or ransomware shield (AVG, Avast, Bitdefender, Norton and similar), which guards Documents, Desktop, Downloads and Pictures and refuses unknown apps that change files there; macOS reports it with the same words as a real permission problem. Add Headroom to the product's allowed apps: in AVG and Avast open Menu, Settings, General, Blocked & Allowed Apps and allow Headroom; in Bitdefender open Protection, Anti-Ransomware, Safe Files, Manage Applications and set Headroom to Allowed. On a managed work Mac ask IT. Headroom also detects installed security products, names the likely one in the result with the setting to change, warns before a delete inside a guarded folder, and shows an Open button for that product. Alternatively click Reveal in Finder in the result and delete the item there, since Finder is always allowed. If no security product is installed, check System Settings, Privacy & Security, Files and Folders, and whether the item belongs to another user." } }
       ]
     },
     {
@@ -510,6 +550,7 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
       <a href="#menubar">Menu bar</a>
       <a href="#duplicates">Duplicates</a>
       <a href="#safety">Safety</a>
+      <a href="#compare">Compare</a>
       <a href="#faq">FAQ</a>
       <a class="nav-gh" href="https://github.com/Ryware/Headroom" aria-label="GitHub"><svg class="ic" viewBox="0 0 256 256" aria-hidden="true" fill="currentColor"><path d="M208.31,75.68A59.78,59.78,0,0,0,202.93,28,8,8,0,0,0,196,24a59.75,59.75,0,0,0-48,24H124A59.75,59.75,0,0,0,76,24a8,8,0,0,0-6.93,4,59.78,59.78,0,0,0-5.38,47.68A58.14,58.14,0,0,0,56,104v8a56.06,56.06,0,0,0,48.44,55.47A39.8,39.8,0,0,0,96,192v8H72a24,24,0,0,1-24-24A40,40,0,0,0,8,136a8,8,0,0,0,0,16,24,24,0,0,1,24,24,40,40,0,0,0,40,40H96v16a8,8,0,0,0,16,0V192a24,24,0,0,1,48,0v40a8,8,0,0,0,16,0V192a39.8,39.8,0,0,0-8.44-24.53A56.06,56.06,0,0,0,216,112v-8A58.14,58.14,0,0,0,208.31,75.68ZM200,112a40,40,0,0,1-40,40H112a40,40,0,0,1-40-40v-8a41.74,41.74,0,0,1,6.9-22.48A8,8,0,0,0,80,73.83a43.81,43.81,0,0,1,.79-33.58,43.88,43.88,0,0,1,32.32,20.06A8,8,0,0,0,119.82,64h32.35a8,8,0,0,0,6.74-3.69,43.87,43.87,0,0,1,32.32-20.06A43.81,43.81,0,0,1,192,73.83a8.09,8.09,0,0,0,1,7.65A41.72,41.72,0,0,1,200,104Z"/></svg></a>
       <button class="tt" type="button" id="theme-toggle" aria-label="Switch color theme" title="Switch theme">
@@ -531,7 +572,7 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
       <p class="lead reveal d2">A free, native Mac disk space analyzer and duplicate finder that tells you what is safe to delete.</p>
       <div class="cta reveal d3">
         <a class="btn btn-primary" href="https://github.com/Ryware/Headroom/releases/latest"><svg class="ic" viewBox="0 0 256 256" aria-hidden="true" fill="currentColor"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Download for Mac</a>
-        <a class="btn btn-ghost" href="https://github.com/Ryware/Headroom">View source</a>
+        <a class="btn btn-ghost" href="https://github.com/Ryware/Headroom"><svg class="ic" viewBox="0 0 256 256" aria-hidden="true" fill="currentColor"><path d="M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z"/></svg>Star on GitHub</a>
       </div>
     </div>
     <div class="wrap">
@@ -561,7 +602,7 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
 
   <section class="numbers" aria-label="Benchmarks">
     <div class="wrap numbers-row">
-      <div><strong class="num" data-to="1.26" data-dec="2" data-suffix="M">0M</strong><span>files scanned in about 20 seconds</span></div>
+      <div><strong class="num" data-to="1.07" data-dec="2" data-suffix="M">0M</strong><span>files scanned in about 16 seconds</span></div>
       <div><strong class="num" data-to="150" data-suffix="+">0+</strong><span>known locations with a safety verdict</span></div>
       <div><strong>$0</strong><span>no Pro tier, no subscription, no trial</span></div>
       <div><strong>MIT</strong><span>open source, builds in one command</span></div>
@@ -730,9 +771,38 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
         <div class="level reveal d3"><span class="dot never" aria-hidden="true"></span><h3>Never</h3><p>Keychains, Mail, Photos library, the system itself. Headroom will tell you so.</p></div>
       </div>
       <figure class="shot wide-shot reveal">
-        <img src="assets/folder-tree.webp" srcset="assets/folder-tree-800.webp 800w, assets/folder-tree.webp 1600w" sizes="(min-width: 1024px) 1080px, 92vw" width="1600" height="1009" loading="lazy" alt="Headroom folder tree with sizes, share of parent and a Safe to delete column">
+        <img src="assets/folder-tree.webp" srcset="assets/folder-tree-800.webp 800w, assets/folder-tree.webp 1600w" sizes="(min-width: 1024px) 1080px, 92vw" width="1600" height="1005" loading="lazy" alt="Headroom folder tree with sizes, share of parent and a Safe to delete column">
         <figcaption>Trash mode is the default and fully recoverable. Permanent mode uses a parallel delete engine for huge folders and cannot be undone.</figcaption>
       </figure>
+    </div>
+  </section>
+
+  <section class="section compare" id="compare">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>How it compares</h2>
+        <p>The same 102 GB home folder with about a million files, scanned by three Mac disk analyzers on an M3 Pro.</p>
+      </div>
+      <ul class="bars reveal" aria-label="Full scan time, lower is better">
+        <li class="us"><span>Headroom 1.0.5</span><span class="track"><span class="fill" style="--w:27%"></span></span><span class="val">15.6 s</span></li>
+        <li><span>Mole 1.59.1</span><span class="track"><span class="fill" style="--w:41%"></span></span><span class="val">23.7 s</span></li>
+        <li><span>DiskTree 1.1.3</span><span class="track"><span class="fill" style="--w:100%"></span></span><span class="val">57.7 s</span></li>
+      </ul>
+      <div class="cmp-scroll reveal">
+        <table class="cmp">
+          <thead><tr><th scope="col"><span class="sr-only">Measure</span></th><th scope="col" class="us">Headroom</th><th scope="col">Mole</th><th scope="col">DiskTree</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Full scan</th><td class="us">15.6 s</td><td>23.7 s</td><td>57.7 s</td></tr>
+            <tr><th scope="row">Repeat scan</th><td class="us">15.6 s, no cache</td><td>4.3 s from its cache</td><td>115 s without quitting</td></tr>
+            <tr><th scope="row">Files listed one by one</th><td class="us">1,075,404</td><td>261,780, the rest sized with <code>du</code></td><td>Not shown</td></tr>
+            <tr><th scope="row">Peak memory</th><td class="us">~1.2 GB</td><td>~21 MB</td><td>~1.35 GB</td></tr>
+            <tr><th scope="row">Safe-to-delete verdicts</th><td class="us">Safe, Usually safe, Caution, Never, with a reason</td><td>Some folders marked cleanable</td><td>Diagnosis view; cleanup needs Pro</td></tr>
+            <tr><th scope="row">Interface</th><td class="us">Native app</td><td>Terminal</td><td>Native app</td></tr>
+            <tr><th scope="row">Price and source</th><td class="us">Free, MIT</td><td>Free, MIT</td><td>Free tier, Pro from $2.99/month, closed source</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="cmp-note">Medians of 2 to 4 runs, October 2026, MacBook Pro M3 Pro, 36 GB. Mole is lighter on memory and much faster on a repeat scan, and it also uninstalls apps and tunes the system. Headroom keeps every file so the tree, treemap and duplicate finder can use them. <a href="https://github.com/Ryware/Headroom#benchmark-headroom-mole-and-disktree">How it was measured</a>.</p>
     </div>
   </section>
 
@@ -740,8 +810,14 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
     <div class="wrap install-grid">
       <div>
         <h2>Up and running in a minute</h2>
+        <div class="brew">
+          <p class="brew-label">With <a href="https://brew.sh">Homebrew</a>, paste this into Terminal:</p>
+          <div class="brew-cmd"><code id="brew-cmd">brew install ryware/tap/headroom</code><button class="brew-copy" type="button" data-copy="brew-cmd" aria-label="Copy the Homebrew command">Copy</button></div>
+          <p class="fine">Update with <code>brew upgrade headroom</code>. Uninstall with <code>brew uninstall headroom</code>.</p>
+        </div>
+        <p class="brew-or">Or download it yourself:</p>
         <ol class="steps">
-          <li><span>1</span><div><strong>Download</strong> the DMG from GitHub Releases. Signed with a Developer ID and notarized by Apple.</div></li>
+          <li><span>1</span><div><strong>Download</strong> the DMG from <a href="https://github.com/Ryware/Headroom/releases/latest">GitHub Releases</a>. Signed with a Developer ID and notarized by Apple.</div></li>
           <li><span>2</span><div><strong>Drag</strong> Headroom to Applications and open it.</div></li>
           <li><span>3</span><div><strong>Scan</strong> a folder, your home folder or the whole startup disk.</div></li>
           <li><span>4</span><div><strong>Clean</strong> what the safety verdicts say is safe.</div></li>
@@ -749,7 +825,7 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
         <p class="fine">macOS 14 Sonoma or newer, Apple silicon and Intel. Prefer to build it yourself? <code>git clone</code> and run <code>./build.sh run</code>.</p>
       </div>
       <figure class="shot reveal d1">
-        <img src="assets/categories.webp" srcset="assets/categories-800.webp 800w, assets/categories.webp 1600w" sizes="(min-width: 1024px) 560px, 92vw" width="1600" height="1003" loading="lazy" alt="Headroom storage by category: virtual machines, applications, dependencies, caches and media">
+        <img src="assets/categories.webp" srcset="assets/categories-800.webp 800w, assets/categories.webp 1600w" sizes="(min-width: 1024px) 560px, 92vw" width="1600" height="1005" loading="lazy" alt="Headroom storage by category: virtual machines, applications, dependencies, caches and media">
       </figure>
     </div>
   </section>
@@ -761,6 +837,7 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
         <p>Short answers. The README has the long ones.</p>
       </div>
       <div class="faq-list">
+        <details id="faq-homebrew"><summary>Can I install Headroom with Homebrew?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>Yes. Run <code>brew install ryware/tap/headroom</code> in Terminal. It installs the same signed, notarized app as the DMG. Update with <code>brew upgrade headroom</code>, uninstall with <code>brew uninstall headroom</code>, or use <code>brew uninstall --zap headroom</code> to also remove its settings and history. If you don't have Homebrew yet, the one-line installer is on <a href="https://brew.sh">brew.sh</a>.</p></div></details>
         <details><summary>Is there a Pro version of Headroom?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>No. There is no Pro tier, subscription, lifetime purchase, trial or in-app purchase. Every feature is free and unlocked for everyone: the treemap, one-click cleanup, developer deep scan, safety hints, Trash-first deletion and fast permanent deletion.</p></div></details>
         <details><summary>Is there a free Mac disk cleaner with no subscription?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>Yes, this one. Headroom is a free, open-source Mac disk space analyzer and cleaner that never locks cleanup or developer scans behind a paywall, and never asks for an account or payment.</p></div></details>
         <details><summary>How does the duplicate finder work?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>Files are grouped by size, then by a hash of their first 64 KB, then by samples from the middle and end, then by a full SHA-256 of the whole file. Only files that still match after the last step are listed, so every group is byte-for-byte identical. Files under 1 MB and files inside app bundles are skipped, and Headroom always keeps one copy of each file unless you turn that guard off.</p></div></details>
@@ -769,13 +846,16 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
         <details><summary>How do I see what is taking up space on my Mac?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>Open Headroom, choose Home or Startup Disk and wait for the scan. The dashboard shows free and used space and the biggest categories, the folder tree lists folders by size, and the treemap draws every file as a rectangle sized by how much space it uses.</p></div></details>
         <details><summary>Is it safe to delete node_modules, DerivedData or cache folders?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>Usually yes, because they are regenerable: <code>node_modules</code> can be reinstalled, Xcode DerivedData is rebuilt on the next build and caches are recreated on demand. Headroom labels recognized items Safe, Usually safe, Caution or Never and explains the effect. Keep Trash mode on if you want to be able to undo.</p></div></details>
         <details><summary>What is the difference between Trash and Permanent mode?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>Trash mode moves items to the macOS Trash so you can restore them until you empty it. Permanent mode removes them immediately with a fast parallel engine like rimraf and cannot be undone.</p></div></details>
-        <details><summary>How fast is Headroom?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>It uses <code>getattrlistbulk(2)</code> and scans directories in parallel across all cores. A home folder with about 1.26 million files and 216,000 folders scanned in roughly 20 seconds.</p></div></details>
+        <details><summary>How fast is Headroom?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>It uses <code>getattrlistbulk(2)</code> and scans directories in parallel across all cores. On an M3 Pro, a home folder with about 1.07 million files and 167,000 folders (102 GB) scanned in about 16 seconds. <a href="#compare">See how it compares</a>.</p></div></details>
         <details><summary>Does Headroom send my data anywhere?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>No. Scanning and analysis happen entirely on your Mac. There is no account system, analytics SDK or cloud service in the app. This website uses Google Analytics to count visits and downloads; the app itself sends nothing.</p></div></details>
         <details><summary>Is there a WizTree or TreeSize alternative for Mac?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>Headroom is a free, native Mac app in the same spirit: a fast scan, a sortable size tree and a treemap, plus safety explanations and one-click developer cleanup.</p></div></details>
         <details><summary>Is there a free alternative to DaisyDisk?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>Headroom is a free, open-source option if you want a DaisyDisk-style visual map of your disk without paying. DaisyDisk is a paid app with a sunburst map; Headroom uses a treemap and a sortable folder tree, and adds a duplicate finder, safety explanations and developer cleanup.</p></div></details>
         <details><summary>How is Headroom different from GrandPerspective?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>Both are open source and both draw a treemap of your disk. GrandPerspective focuses on the treemap view. Headroom adds a sortable folder tree, category breakdown, duplicate finder, safety explanations for what you are about to delete, one-click developer cleanup and a menu bar monitor.</p></div></details>
+        <details><summary>Is Headroom the same app as DiskTree?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>No. Headroom was called DiskTree before version 1.0, but it is not related to the DiskTree app sold at disktree.org. That DiskTree is a closed-source treemap app with a free tier and a paid Pro plan for cleanup. Headroom is free and open source, with cleanup, a duplicate finder and Safe / Caution / Never verdicts included. Scanning the same 102 GB home folder on an M3 Pro, Headroom took about 16 seconds and DiskTree 1.1.3 about 58. <a href="https://github.com/Ryware/Headroom#benchmark-headroom-mole-and-disktree">See the full benchmark</a>.</p></div></details>
+        <details><summary>How is Headroom different from Mole?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>Both are free and open source. Mole is a terminal cleaner whose <code>mo analyze</code> command shows disk usage; Headroom is a native app with a folder tree, treemap, duplicate finder and a Safe / Caution / Never verdict for each known folder. Scanning the same 102 GB home folder on an M3 Pro, Headroom finished a full scan in about 16 seconds and Mole in about 24, and Headroom listed every one of the 1.07 million files. Mole uses far less memory and answers repeat scans from a cache in about 4 seconds, and it also uninstalls apps and optimizes the system, which Headroom does not. <a href="https://github.com/Ryware/Headroom#benchmark-headroom-mole-and-disktree">See the full benchmark</a>.</p></div></details>
         <details><summary>Is Headroom a free alternative to CleanMyMac?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>For finding and freeing disk space, yes. Headroom covers disk analysis, large files, duplicates and cache and developer cleanup for free, with no subscription. It is not a full maintenance suite: it has no malware scanner, app uninstaller or performance tools.</p></div></details>
         <details><summary>What are the system requirements?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>macOS 14 Sonoma or newer on Apple silicon or Intel. Full Disk Access is only needed for protected locations such as Mail, Messages and Safari data.</p></div></details>
+        <details id="faq-trash-blocked"><summary>Headroom says it does not have permission to move a folder to the Trash. What now?<span class="plus" aria-hidden="true"></span></summary><div class="answer"><p>This almost always comes from an antivirus or ransomware shield (AVG, Avast, Bitdefender, Norton and similar). They guard Documents, Desktop, Downloads and Pictures and refuse unknown apps that change files there, and macOS reports it with the same words as a real permission problem. Add Headroom to the product&rsquo;s allowed apps:</p><ul><li><strong>AVG and Avast:</strong> Menu &rsaquo; Settings &rsaquo; General &rsaquo; Blocked &amp; Allowed Apps &rsaquo; Allow app &rsaquo; Headroom.</li><li><strong>Bitdefender:</strong> Protection &rsaquo; Anti-Ransomware &rsaquo; Safe Files &rsaquo; Manage Applications &rsaquo; set Headroom to Allowed.</li><li><strong>Managed work Mac</strong> (CrowdStrike, SentinelOne, Jamf Protect): ask IT to allow the app.</li></ul><p>Or click <strong>Reveal in Finder</strong> in the result and delete the item there: Finder is always allowed. Headroom also looks for installed security products, names the likely one in the result with the setting to change, warns before a delete inside a guarded folder, and shows an <strong>Open</strong> button for that product. If no security product is installed, check System Settings &rsaquo; Privacy &amp; Security &rsaquo; Files and Folders, and whether the item belongs to another user.</p></div></details>
       </div>
     </div>
   </section>
@@ -785,7 +865,7 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
       <img src="icon-144.webp" width="72" height="72" alt="" loading="lazy">
       <div>
         <h2>Give your disk some room to breathe.</h2>
-        <p>Free, open source, every feature included.</p>
+        <p>Free, open source, every feature included. If it saved you space, a <a href="https://github.com/Ryware/Headroom">star on GitHub</a> helps other Mac users find it.</p>
       </div>
       <a class="btn btn-primary" href="https://github.com/Ryware/Headroom/releases/latest"><svg class="ic" viewBox="0 0 256 256" aria-hidden="true" fill="currentColor"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Download for Mac</a>
     </div>
@@ -814,6 +894,13 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
   document.querySelectorAll('.nav nav a[href^="#"]').forEach(function(a){ a.addEventListener('click', function(){ track('nav_click', { target: a.getAttribute('href').slice(1) }); }); });
   document.querySelectorAll('footer a, .faq-list a').forEach(function(a){ a.addEventListener('click', function(){ track('link_click', { url: a.href, location: sectionOf(a) }); }); });
   var tt = document.getElementById('theme-toggle'); if (tt) tt.addEventListener('click', function(){ setTimeout(function(){ track('theme_toggle', { theme: document.documentElement.getAttribute('data-theme') || 'system' }); }, 50); });
+  /* Homebrew copy button */
+  document.querySelectorAll('.brew-copy').forEach(function(b){ b.addEventListener('click', function(){
+    var text = document.getElementById(b.getAttribute('data-copy')).textContent;
+    var done = function(){ b.textContent = 'Copied'; setTimeout(function(){ b.textContent = 'Copy'; }, 1600); };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function(){});
+    track('brew_copy', { location: sectionOf(b) });
+  }); });
   /* hero treemap demo */
   var demo = document.getElementById('demo');
   if (demo) {
@@ -837,6 +924,7 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
   var dup = document.getElementById('dup-stage');
   if (dup) new MutationObserver(function(){ var p = dup.getAttribute('data-pass'); if (p && p !== '0') trackOnce('dup' + p, 'duplicates_pass', { pass: parseInt(p, 10) }); }).observe(dup, { attributes: true, attributeFilter: ['data-pass'] });
   /* FAQ */
+  (function(){ var h = location.hash && document.querySelector('.faq-list ' + location.hash); if (h) { h.open = true; h.scrollIntoView(); } })();
   document.querySelectorAll('.faq-list details').forEach(function(d){ d.addEventListener('toggle', function(){ if (d.open) track('faq_open', { question: d.querySelector('summary').textContent.trim().slice(0, 80) }); }); });
   /* section views, once each */
   if ('IntersectionObserver' in window) {

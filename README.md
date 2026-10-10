@@ -34,12 +34,20 @@
 <p align="center">
   <a href="../../releases/latest"><strong>Download the latest release</strong></a>
   ·
+  <a href="#install">Install with Homebrew</a>
+  ·
   <a href="#build-from-source">Build from source</a>
   ·
   <a href="#safety-and-privacy">Safety & privacy</a>
 </p>
 
-![Headroom dashboard showing disk usage, cleanup candidates, and space by category](Screenshots/dashboard.jpeg)
+<p align="center"><sub>Free forever, no ads, no tracking. If Headroom saved you some space, a ⭐ on this repo is the best way to help other Mac users find it.</sub></p>
+
+```sh
+brew install ryware/tap/headroom
+```
+
+![Headroom treemap of a home folder colored by file age](Screenshots/treemap.jpeg)
 
 Headroom turns a crowded drive into an understandable map. Scan a folder or disk, identify the largest files and developer caches, inspect what is safe to remove, and clean up without leaving the app.
 
@@ -65,9 +73,21 @@ The virtualized folder tree stays responsive with very large directories. Sort b
 
 ### See the whole drive at a glance
 
-![Headroom treemap colored by file age](Screenshots/treemap.jpeg)
+![Headroom dashboard showing free space, a 7-day trend, cleanup candidates, and duplicate files](Screenshots/dashboard.jpeg)
 
-The interactive treemap can be colored by category, age, or deletion safety. Double-click to zoom and right-click an item for actions.
+The dashboard sums up the scan: free space, a 7-day trend, cleanup candidates, and a shortcut to the duplicate finder. The interactive treemap (top of this page) can be colored by category, age, or deletion safety. Double-click to zoom and right-click an item for actions.
+
+### Know what is safe to delete
+
+![Headroom Cleanup view listing caches, Xcode archives, and build output with Safe, Usually safe, and Caution badges](Screenshots/cleanup.jpeg)
+
+Cleanup gathers regenerable folders, such as caches, DerivedData, `node_modules`, and build output, biggest first, and labels each one Safe, Usually safe, Caution, or Never.
+
+### Remove duplicate files
+
+![Headroom Duplicates pane with groups of identical files and a Select extra copies (keep newest) button](Screenshots/duplicates.jpeg)
+
+Byte-for-byte identical files are grouped and ranked by reclaimable space. One click selects the extra copies and keeps the newest.
 
 ### Understand what consumes the space
 
@@ -95,6 +115,8 @@ A clear overview of the scanned location with:
 - category usage; and
 - links to the five largest files and apps.
 
+Every tile is a link: *Size on disk* opens the Treemap, *Files* opens Largest Files, *Folders* opens the Folder Tree, *Cleanup candidates* opens Cleanup, and a category bar opens By Category with that category selected.
+
 ### Folder Tree
 
 A virtualized `NSOutlineView` creates only the visible rows and recycles cells, so even enormous dependency folders remain practical to explore. Sizes show bytes allocated on disk, with inline share-of-parent bars and sortable columns.
@@ -120,7 +142,9 @@ Finds files that exist more than once with identical content and shows how much 
 
 Hashing runs on a bounded number of parallel lanes (disk-bound work thrashes with too many concurrent reads), shows which pass it is in, and can be cancelled. Files under 1 MB are skipped (they add noise and free nothing), as are files inside app bundles and other packages, which legitimately share resources. Symlinks are never content.
 
-**Choosing what to delete.** Each group lists every copy with its folder, modification date and the safety verdict from the knowledge base. Tick copies by hand, or use **Select** to keep the newest, the oldest, or the copy highest in the folder tree and mark the rest. The *keep at least one copy* guard is on by default, so a group can never be emptied by accident. Deletion uses the same Trash or permanent mode as everywhere else; removed copies disappear from the groups without a rescan.
+**Choosing what to delete.** A bar above the results says what to do next. **Select extra copies (keep newest)** ticks every copy except the newest in each group; **Other ways** keeps the oldest copy or the one highest in the folder tree instead. Copies marked *Do not delete* (for example inside `.git`) are never ticked for you, though you can still tick them by hand. Once copies are ticked, the bar shows how many and how much space, with **Clear** and **Move N copies to Trash** (or **Delete N copies permanently** in permanent mode), and says whether they can be put back.
+
+Each copy leads with the part of its path that differs from the other copies (`Downloads/megapack.abr` vs `Design/Brushes/megapack.abr`), with the folder they all share underneath, its modification date and the safety verdict. Hover for the full path; click a copy to see it in the inspector. Groups with more than six copies show five and a *Show N more copies* link. The *keep at least one copy* guard is on by default, so a group can never be emptied by accident. Deletion uses the same Trash or permanent mode as everywhere else; removed copies disappear from the groups without a rescan.
 
 **Where it shows up.** The Dashboard has a *Duplicate files* card with a one-click scan and the reclaimable total, and the sidebar has a *Duplicates* pane with the full list, a path filter, and the selection tools. The App Store build has the same feature.
 
@@ -167,6 +191,24 @@ History is stored only on your Mac in `~/Library/Application Support/Headroom/`,
 
 A rule base covering roughly 150 macOS and developer-tool locations gives each recognized item a consistent safety verdict and plain-language explanation. Unknown or sensitive items remain clearly marked for manual review.
 
+### Keyboard shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| ⌘O | Scan a folder or volume |
+| ⌘R | Rescan |
+| ⌘[ or ⌘← | Back |
+| ⌘] or ⌘→ | Forward |
+| ⌘1 | Dashboard |
+| ⌘2 | Folder Tree |
+| ⌘3 | Treemap |
+| ⌘4 | By Category |
+| ⌘5 | Largest Files |
+| ⌘6 | Duplicates |
+| ⌘7 | Cleanup |
+
+Back and Forward are also in the **Go** menu and as **‹ ›** buttons in the toolbar. ⌘← and ⌘→ go back and forward everywhere except in a text field, where they move the cursor as usual.
+
 ## Safety and privacy
 
 Headroom works locally and has no account system, analytics SDK, or cloud service.
@@ -192,11 +234,38 @@ Permanent deletion follows a parallel POSIX strategy:
 2. directories use their own `dirfd` and remove entries with `unlinkat`, avoiding repeated full-path walks; and
 3. empty directories are removed deepest-first, with each level processed in parallel.
 
-If a security product (an antivirus or ransomware shield with an Endpoint Security extension) holds every removal for seconds and then refuses it, Headroom notices after a few consecutive refusals, stops instead of grinding for hours, renames any hidden folder back, and says so in the result. Add Headroom to that product's allowed apps, or use Trash mode for folders it protects.
+If a security product (an antivirus or ransomware shield with an Endpoint Security extension) holds every removal for seconds and then refuses it, Headroom notices (one file is tried alone before the parallel pass, and a held refusal there stops the delete within seconds), renames any hidden folder back, names the product it finds installed and says where to allow Headroom. Before a delete inside a guarded folder the confirmation already warns about it.
 
 Trash mode uses the standard macOS Trash API instead.
 
 The duplicate finder hashes with `pread(2)` into one reusable buffer per worker, so memory stays flat no matter how many gigabytes it compares.
+
+### Benchmark: Headroom, Mole and DiskTree
+
+All three apps scanned the same home folder (~102 GB, ~1.07 million files) on a MacBook Pro with an M3 Pro and 36 GB of RAM, macOS 27.2, in October 2026.
+
+| | Headroom 1.0.5 | [Mole](https://github.com/tw93/Mole) 1.59.1 (`mo analyze`) | [DiskTree](https://www.disktree.org) 1.1.3 (free tier) |
+|---|---|---|---|
+| Full scan, median | **15.6 s** (11.9 – 15.9 s, 3 runs) | 23.7 s (20.9 – 26.8 s, 4 runs) | 57.7 s (56.3 – 59.1 s, 2 runs) |
+| Repeat scan | same as a full scan (no cache) | **4.3 s** (reuses its cache in `~/.cache/mole`) | 115.2 s (rescan without quitting the app, 1 run) |
+| Files listed one by one | **1,075,404** | 261,780 (other folders sized with `du`) | not shown (~940,000 counted while scanning) |
+| Total size found | 102.35 GB | 101.4 GB | ~94.8 GB |
+| Peak memory | ~1.2 GB | **~21 MB** | ~1.35 GB |
+| Interface | Native app: tree, treemap, categories | Terminal UI, or `-json` | Native app: tree and treemap |
+| Says what is safe to delete | Safe / Usually safe / Caution / Never, with a reason | Marks some folders `cleanable` | Diagnosis view; cleanup needs Pro |
+| Price and source | Free, MIT | Free, MIT | Free tier; Pro from $2.99/month; closed source |
+
+How it was measured:
+
+- **Headroom:** the time it reports after a scan.
+- **Mole:** the wall-clock time of `analyze-go -json ~`, run with an empty cache folder each time so every run is a full scan.
+- **DiskTree:** it has no timer, so its CPU use was sampled every 0.2 s and a scan was timed from clicking Scan until the app went idle, accurate to about half a second. Each full scan was started right after launching the app. One more scan, started without quitting, took twice as long, so it is listed as the repeat scan.
+
+All three ran within the same hour, so each saw similar disk-cache conditions.
+
+What this shows: Headroom does a full scan about 1.5× faster than Mole and 3.7× faster than DiskTree, and keeps every file, which the tree, treemap and duplicate finder need. Like DiskTree, it uses over a gigabyte of memory for that. Mole is far lighter and answers repeat scans from its cache in seconds, and it is also a broader CLI cleaner (uninstaller, system optimizer), which Headroom is not.
+
+Headroom was called DiskTree before version 1.0. It is not related to the DiskTree app at disktree.org.
 
 ## Requirements
 
@@ -206,12 +275,48 @@ The duplicate finder hashes with `pread(2)` into one reusable buffer per worker,
 
 ## Install
 
-1. Open the [latest release](../../releases/latest).
-2. Download `Headroom-<version>.dmg`.
-3. Drag **Headroom** to **Applications**.
-4. Open Headroom and choose a folder, your home directory, or the startup disk.
+Headroom needs macOS 14 Sonoma or newer and runs natively on Apple silicon and Intel Macs. It is free, and both ways of installing get the same signed, notarized app.
 
-A notarized release should open normally through Gatekeeper. If you build locally, the ad-hoc signed development build is placed in `build/Headroom.app`.
+### Option 1: Homebrew (recommended)
+
+If you don't have [Homebrew](https://brew.sh) yet, install it first by pasting this into **Terminal** (Applications › Utilities):
+
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Then install Headroom:
+
+```sh
+brew install ryware/tap/headroom
+```
+
+That's it. Headroom is now in your Applications folder. To manage it later:
+
+| To | Run |
+| --- | --- |
+| Update to the latest version | `brew upgrade headroom` |
+| Uninstall | `brew uninstall headroom` |
+| Uninstall and remove its settings and history | `brew uninstall --zap headroom` |
+
+### Option 2: Download the DMG
+
+1. Open the [latest release](../../releases/latest) and download `Headroom-<version>.dmg`.
+2. Open the DMG and drag **Headroom** onto **Applications**.
+3. Eject the DMG, then open Headroom from Applications or Launchpad.
+
+To update, download the new DMG and replace the app. To uninstall, drag Headroom from Applications to the Trash.
+
+### First launch
+
+1. Choose what to scan: a folder, your home folder, or the startup disk.
+2. To scan protected places such as Mail, Messages or Safari data, Headroom asks for **Full Disk Access**. Turn it on in **System Settings › Privacy & Security › Full Disk Access** and reopen Headroom. You can skip this if you only scan your own folders.
+
+### Troubleshooting
+
+- **"Headroom can't be opened" or "cannot verify the developer":** release builds are notarized by Apple and should open normally. If you see this, make sure you downloaded from this repository's [releases page](../../releases/latest) or used Homebrew, then right-click Headroom in Applications and choose **Open**.
+- **`brew` says "command not found":** finish the Homebrew installer's "Next steps" (it prints two commands that add `brew` to your PATH), then open a new Terminal window.
+- **Building yourself:** `./build.sh` places an ad-hoc signed development build in `build/Headroom.app` (see [Build from source](#build-from-source)).
 
 ## Use with AI agents (MCP and command line)
 
@@ -290,7 +395,7 @@ Releases are built by GitHub Actions on a macOS runner. Pushing a version tag bu
 ```sh
 # 1. bump CFBundleShortVersionString / CFBundleVersion in Info.plist (and project.yml), add a CHANGELOG section
 # 2. commit and push, then:
-git tag -a v1.0.3 -m "Headroom 1.0.3" && git push origin v1.0.3
+git tag -a v1.0.5 -m "Headroom 1.0.5" && git push origin v1.0.5
 ```
 
 The workflow (`.github/workflows/release.yml`) needs five repository secrets: `MACOS_CERT_P12` (base64 of the exported Developer ID Application `.p12`), `MACOS_CERT_PASSWORD`, and an App Store Connect API key as `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8` (base64 of the `.p8`). The tag must match the version in `Info.plist` or the run fails before building.
@@ -352,7 +457,18 @@ No. Disk space is reclaimed after you empty Trash.
 No. Use Trash mode unless you are certain the selected items are disposable.
 
 **Why did a permanent delete stop with "every file removal was held for seconds and then refused"?**  
-An antivirus or ransomware shield on your Mac is blocking Headroom from deleting inside a folder it protects (usually Documents, Desktop or Pictures). Each removal waits for the security product's verdict and is then refused, so Headroom stops rather than spend hours deleting nothing. Add Headroom to that product's allowed applications, or use Trash mode for those folders.
+An antivirus or ransomware shield on your Mac is blocking Headroom from deleting inside a folder it guards (usually Documents, Desktop, Downloads or Pictures). Each removal waits for the security product's verdict and is then refused, so Headroom stops rather than spend hours deleting nothing. Headroom names the product it finds installed, with the setting to change (for example Bitdefender › Protection › Anti-Ransomware › Safe Files › Manage Applications, or AVG › Settings › General › Blocked & Allowed Apps), and offers Open ⟨product⟩ and Reveal in Finder buttons; Finder is always allowed. Trash mode is refused the same way until Headroom is allowed.
+
+**Why does Move to Trash say "You do not have permission to move … to the trash"?**  
+The same security products refuse Trash moves too, and macOS reports it with the words it uses for a real permission problem. Headroom tells the two apart: a refusal that was held for seconds is the shield. Allow Headroom in it (AVG and Avast: Menu › Settings › General › Blocked & Allowed Apps; Bitdefender: Protection › Anti-Ransomware › Safe Files › Manage Applications), or click **Reveal in Finder** in the result and delete there, since Finder is always allowed. Without a security product, check System Settings › Privacy & Security › Files and Folders, or whether the item belongs to another user. The in-app **How to Fix** link opens the [landing-page FAQ](https://headroom-app.org/#faq-trash-blocked).
+
+## Contributors
+
+Thanks to everyone who has helped make Headroom better:
+
+- [@SonyStone](https://github.com/SonyStone): Finder-style names for scanned locations (#10), a clickable By Category chart (#11), a clickable Dashboard (#12), smooth Treemap hover (#13) and a clearer Duplicates flow (#14), each with a careful bug report first.
+
+Bug reports and pull requests are welcome on [GitHub](https://github.com/Ryware/Headroom).
 
 ## License
 

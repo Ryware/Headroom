@@ -34,16 +34,18 @@ async function newPage(opts = {}) {
 
   check('page loads with a title', (await page.title()).includes('Headroom'), await page.title());
   check('no JavaScript errors on load', page.errors.length === 0, page.errors.join(' | '));
-  const expectedMissing = (u) => u.includes('assets/duplicates'); // screenshot not taken yet
-  const realFailures = failedRequests.filter((u) => !expectedMissing(u));
-  check('all assets load (except the pending duplicates screenshot)', realFailures.length === 0, realFailures.join(', '));
+  check('all assets load', failedRequests.length === 0, failedRequests.join(', '));
 
   const fonts = await page.evaluate(() => document.fonts.check('600 20px Geist') && document.fonts.check('12px "Geist Mono"'));
   check('self-hosted Geist fonts are active', fonts);
   check('stylesheet is inlined (no render-blocking CSS request)', (await page.$$('link[rel=stylesheet]')).length === 0);
 
-  const broken = await page.$$eval('img', (imgs) => imgs.filter((i) => i.complete && i.naturalWidth === 0 && !i.src.includes('duplicates')).map((i) => i.getAttribute('src')));
+  const broken = await page.$$eval('img', (imgs) => imgs.filter((i) => i.complete && i.naturalWidth === 0).map((i) => i.getAttribute('src')));
   check('no broken images', broken.length === 0, broken.join(', '));
+  await page.locator('#dup-shot img').scrollIntoViewIfNeeded();
+  const dupShot = await page.waitForFunction(() => { const i = document.querySelector('#dup-shot img'); return !i.closest('figure').hidden && i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 }).then(() => true, () => false);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  check('duplicates screenshot is shown', dupShot);
 
   const anchors = await page.$$eval('a[href^="#"]', (as) => as.map((a) => a.getAttribute('href')).filter((h) => h.length > 1 && !document.querySelector(h)));
   check('every in-page link has a target', anchors.length === 0, anchors.join(', '));

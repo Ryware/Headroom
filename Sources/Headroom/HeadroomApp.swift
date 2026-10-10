@@ -59,8 +59,8 @@ struct HeadroomApp: App {
     @AppStorage("seenIntroVersion") private var seenIntroVersion = 0
     @AppStorage("menuBarEnabled") private var menuBarEnabled = true
     @AppStorage("menuBarShowsText") private var menuBarShowsText = false
-    @State private var showIntro = false
-    @State private var introPage = 0
+    /// The page to open the tour on. `.sheet(item:)` hands it to the sheet; with a separate Bool the sheet captured a stale page.
+    @State private var introPage: IntroPage?
 
     var body: some Scene {
         WindowGroup("Headroom", id: "main") {
@@ -68,20 +68,21 @@ struct HeadroomApp: App {
                 .environmentObject(state)
                 .frame(minWidth: 1120, minHeight: 680)
                 .background(WindowSizing(minSize: NSSize(width: 1120, height: 680)))
-                .sheet(isPresented: $showIntro, onDismiss: { seenIntroVersion = currentIntroVersion }) {
-                    IntroView(page: introPage)
+                .sheet(item: $introPage, onDismiss: { seenIntroVersion = currentIntroVersion }) {
+                    IntroView(page: $0.id)
                 }
                 .task { MCPServer.app = state }
                 .task {
                     // First launch → full tour; updated app → jump to What's New.
                     try? await Task.sleep(for: .milliseconds(600))
-                    if seenIntroVersion == 0 { introPage = 0; showIntro = true }
-                    else if seenIntroVersion < currentIntroVersion { introPage = 7; showIntro = true }
+                    if seenIntroVersion == 0 { introPage = .welcome }
+                    else if seenIntroVersion < currentIntroVersion { introPage = .whatsNew }
                 }
         }
         .windowStyle(.titleBar)
         .defaultSize(width: 1280, height: 800)
         .commands {
+            GoCommands()
             CommandGroup(replacing: .appInfo) {
                 Button("About Headroom") {
                     let credits = NSAttributedString(string: "See what's eating your disk. Clean it in one click.\n\nScanning uses getattrlistbulk(2) and fans out across all cores; permanent deletion renames first, then unlinks in parallel.", attributes: [.font: NSFont.systemFont(ofSize: 11)])
@@ -89,8 +90,8 @@ struct HeadroomApp: App {
                 }
             }
             CommandGroup(replacing: .help) {
-                Button("Welcome Tour") { introPage = 0; showIntro = true }
-                Button("What's New in Headroom") { introPage = 7; showIntro = true }
+                Button("Welcome Tour") { introPage = .welcome }
+                Button("What's New in Headroom") { introPage = .whatsNew }
             }
             CommandGroup(replacing: .newItem) {
                 Button("Scan Folder…") { state.pickFolder() }

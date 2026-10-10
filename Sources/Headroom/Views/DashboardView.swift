@@ -4,6 +4,7 @@ import Charts
 struct DashboardView: View {
     @EnvironmentObject var state: AppState
     @Binding var pane: Pane
+    @Binding var categoryFocus: FileCategory?
     @Environment(\.scenePhase) private var scenePhase
     @State private var volumeSpace: VolumeSpace?
 
@@ -39,13 +40,17 @@ struct DashboardView: View {
                     FreeSpaceTrendCard()
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 12)], spacing: 12) {
                         statistic("Size on disk", value: root.allocatedSize.humanBytes,
-                                  note: "\(root.logicalSize.humanBytes) logical size", symbol: "internaldrive", color: .purple)
+                                  note: "\(root.logicalSize.humanBytes) logical size", symbol: "internaldrive", color: .purple,
+                                  destination: .treemap)
                         statistic("Files", value: root.fileCount.formatted(),
-                                  note: "Inside the scanned folder", symbol: "doc.on.doc", color: .blue)
+                                  note: "Inside the scanned folder", symbol: "doc.on.doc", color: .blue,
+                                  destination: .largest)
                         statistic("Folders", value: root.directoryCount.formatted(),
-                                  note: "Excludes the scanned root", symbol: "folder", color: .orange)
+                                  note: "Excludes the scanned root", symbol: "folder", color: .orange,
+                                  destination: .tree)
                         statistic("Cleanup candidates", value: cleanupBytes.humanBytes,
-                                  note: "\(state.cleanupCandidates.count.formatted()) folders to review", symbol: "sparkles", color: .mint)
+                                  note: "\(state.cleanupCandidates.count.formatted()) folders to review", symbol: "sparkles", color: .mint,
+                                  destination: .cleanup)
                     }
                     duplicatesCard
 
@@ -67,21 +72,40 @@ struct DashboardView: View {
                                 AxisMarks { value in
                                     AxisGridLine()
                                     AxisValueLabel {
-                                        if let bytes = value.as(Int64.self) { Text(bytes.humanBytes) }
+                                        if let bytes = value.as(Int64.self) { Text(bytes == 0 ? "0" : bytes.humanBytes) }
                                     }
                                 }
                             }
+                            .chartOverlay { proxy in
+                                GeometryReader { geo in
+                                    Rectangle().fill(.clear).contentShape(Rectangle())
+                                        .onTapGesture { p in
+                                            guard let plot = proxy.plotFrame.map({ geo[$0] }),
+                                                  let title: String = proxy.value(atY: p.y - plot.minY),
+                                                  let row = rows.first(where: { $0.category.title == title }) else { return }
+                                            openCategory(row.category)
+                                        }
+                                        .linkCursor()
+                                }
+                            }
+                            .help("Click a bar to open it in By Category")
                             .frame(height: CGFloat(rows.count) * 28 + 30)
                             ForEach(rows) { row in
-                                HStack {
-                                    Label(row.category.title, systemImage: row.category.symbol)
-                                        .foregroundStyle(row.category.color)
-                                    Spacer()
-                                    Text(Double(row.bytes) / Double(max(1, total)), format: .percent.precision(.fractionLength(1)))
-                                        .foregroundStyle(.secondary)
-                                    Text(row.bytes.humanBytes).frame(minWidth: 80, alignment: .trailing)
+                                Button { openCategory(row.category) } label: {
+                                    HStack {
+                                        Label(row.category.title, systemImage: row.category.symbol)
+                                            .foregroundStyle(row.category.color)
+                                        Spacer()
+                                        Text(Double(row.bytes) / Double(max(1, total)), format: .percent.precision(.fractionLength(1)))
+                                            .foregroundStyle(.secondary)
+                                        Text(row.bytes.humanBytes).frame(minWidth: 80, alignment: .trailing)
+                                    }
+                                    .font(.callout).monospacedDigit()
+                                    .contentShape(Rectangle())
                                 }
-                                .font(.callout).monospacedDigit()
+                                .buttonStyle(.plain)
+                                .linkCursor()
+                                .help("Open \(row.category.title) in By Category")
                             }
                         }
                     }
@@ -245,7 +269,9 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 10) {
             Label("Dashboard", systemImage: "chart.bar.xaxis")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
-            Text(root.path).font(.callout).lineLimit(2).truncationMode(.middle).textSelection(.enabled)
+            Label(state.rootLocation?.summary ?? root.path, systemImage: state.rootLocation?.symbol ?? "folder")
+                .font(.callout).lineLimit(2).truncationMode(.middle).textSelection(.enabled)
+                .help(root.path)
             HStack(spacing: 12) {
                 if let finished = state.progress.finished {
                     Text("Scanned \(finished.formatted(date: .abbreviated, time: .shortened))")
@@ -265,13 +291,28 @@ struct DashboardView: View {
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
-    private func statistic(_ title: String, value: String, note: String, symbol: String, color: Color) -> some View {
-        card {
-            Label(title, systemImage: symbol).font(.callout.weight(.medium)).foregroundStyle(color)
-            Text(value).font(.system(size: 28, weight: .bold, design: .rounded)).monospacedDigit()
-                .lineLimit(1).minimumScaleFactor(0.7)
-            Text(note).font(.caption).foregroundStyle(.secondary)
+    private func openCategory(_ category: FileCategory) {
+        categoryFocus = category
+        pane = .categories
+    }
+
+    private func statistic(_ title: String, value: String, note: String, symbol: String, color: Color,
+                           destination: Pane) -> some View {
+        Button { pane = destination } label: {
+            card {
+                HStack {
+                    Label(title, systemImage: symbol).font(.callout.weight(.medium)).foregroundStyle(color)
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                }
+                Text(value).font(.system(size: 28, weight: .bold, design: .rounded)).monospacedDigit()
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                Text(note).font(.caption).foregroundStyle(.secondary)
+            }
         }
+        .buttonStyle(StatTileButtonStyle())
+        .help("Open \(destination.title)")
+        .accessibilityLabel("\(title): \(value). Open \(destination.title)")
     }
 
     private func sectionHeader(_ title: String, destination: Pane) -> some View {
@@ -293,5 +334,61 @@ struct DashboardView: View {
             .padding(18)
             .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.primary.opacity(0.07)))
+    }
+}
+
+/// Stat tiles are links to their pane: highlight on hover and press, pointing-hand cursor.
+private struct StatTileButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Tile(configuration: configuration)
+    }
+
+    private struct Tile: View {
+        let configuration: Configuration
+        @State private var hovered = false
+
+        var body: some View {
+            configuration.label
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(.primary.opacity(configuration.isPressed ? 0.08 : hovered ? 0.04 : 0))
+                        .allowsHitTesting(false)
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(Color.accentColor.opacity(hovered ? 0.5 : 0))
+                        .allowsHitTesting(false)
+                }
+                .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .onHover { hovered = $0 }
+                .linkCursor()
+                .animation(.easeOut(duration: 0.12), value: hovered)
+        }
+    }
+}
+
+extension View {
+    /// Pointing-hand cursor while the pointer is over this view. Uses `set()` rather than
+    /// push/pop so a view that disappears on click (navigation) can't leave the stack unbalanced.
+    func linkCursor() -> some View {
+        modifier(LinkCursor())
+    }
+}
+
+private struct LinkCursor: ViewModifier {
+    @State private var inside = false
+    func body(content: Content) -> some View {
+        content
+            .onContinuousHover { phase in
+                switch phase {
+                case .active:
+                    inside = true
+                    NSCursor.pointingHand.set()
+                case .ended:
+                    inside = false
+                    NSCursor.arrow.set()
+                }
+            }
+            .onDisappear { if inside { NSCursor.arrow.set() } }
     }
 }

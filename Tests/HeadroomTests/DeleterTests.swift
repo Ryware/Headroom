@@ -105,7 +105,6 @@ final class DeleterTests: XCTestCase {
             _ = held.timed { usleep(3_000); return false }
         }
         XCTAssertTrue(held.stalled, "refusals that each took longer than the threshold mean something is holding every unlink")
-        XCTAssertEqual(held.abortReason, Deleter.stallMessage)
 
         // A security product that scans slowly but allows the deletes: successes keep resetting the streak.
         let scanned = Deleter.DeleteControl(slowThreshold: 1_000_000)
@@ -118,6 +117,35 @@ final class DeleterTests: XCTestCase {
         // ...but once it flips to refusing everything, we stop promptly despite the earlier successes.
         for _ in 0..<Deleter.DeleteControl.refusalsBeforeAbort { _ = scanned.timed { usleep(3_000); return false } }
         XCTAssertTrue(scanned.stalled)
+    }
+
+    func testDecisiveProbeStallsOnOneHeldPermissionRefusal() {
+        let held = Deleter.DeleteControl(slowThreshold: 1_000_000)
+        XCTAssertFalse(held.timed(decisive: true) { usleep(3_000); errno = EPERM; return false })
+        XCTAssertTrue(held.stalled, "one held EPERM on the pre-flight probe is enough to stop")
+
+        let fast = Deleter.DeleteControl(slowThreshold: 1_000_000)
+        _ = fast.timed(decisive: true) { errno = EPERM; return false }
+        XCTAssertFalse(fast.stalled, "an instant refusal is a normal permission error")
+
+        let io = Deleter.DeleteControl(slowThreshold: 1_000_000)
+        _ = io.timed(decisive: true) { usleep(3_000); errno = EIO; return false }
+        XCTAssertFalse(io.stalled, "a slow I/O error is a volume problem, not a security product")
+
+        let allowed = Deleter.DeleteControl(slowThreshold: 1_000_000)
+        XCTAssertTrue(allowed.timed(decisive: true) { usleep(3_000); return true })
+        XCTAssertFalse(allowed.stalled, "held but allowed: a slow scanner, keep going")
+    }
+
+    func testResultCarriesRootsForRevealInFinder() async throws {
+        let victim = dir.appendingPathComponent("victim")
+        try TestSupport.write(victim.appendingPathComponent("a.bin"), bytes: 10)
+        let (root, _) = try await TestSupport.scan(dir)
+        let node = try XCTUnwrap(root.children.first { $0.name == "victim" })
+        let result = await permanentDelete([node])
+        XCTAssertEqual(result.roots, [victim.path])
+        XCTAssertFalse(result.stalled)
+        XCTAssertTrue(result.blockedBy.isEmpty)
     }
 
     func testCancelStopsTheDeleteAndReportsIt() async throws {
@@ -146,5 +174,21 @@ final class DeleterTests: XCTestCase {
         XCTAssertNotEqual(DeleteMode.trash.symbol, DeleteMode.permanent.symbol)
         XCTAssertNotEqual(DeleteMode.trash.shortNote, DeleteMode.permanent.shortNote)
         XCTAssertEqual(DeleteMode(rawValue: "trash"), .trash)
+    }
+
+    func testTrashFailureExplanationsNameTheRealCause() {
+        func cocoa(_ code: Int32) -> NSError {
+            NSError(domain: NSCocoaErrorDomain, code: NSFileWriteNoPermissionError,
+                    userInfo: [NSUnderlyingErrorKey: NSError(domain: NSPOSIXErrorDomain, code: Int(code))])
+        }
+        // EPERM after a multi-second hold is a ransomware shield; the same errno at once is a privacy folder.
+        XCTAssertEqual(Deleter.explainTrashFailure(cocoa(EPERM), path: "/x", held: true), Deleter.trashBlockedMessage)
+        XCTAssertEqual(Deleter.explainTrashFailure(cocoa(EPERM), path: "/x", held: false), Deleter.trashPrivacyMessage)
+        XCTAssertEqual(Deleter.explainTrashFailure(cocoa(EACCES), path: "/x", held: true), Deleter.trashOwnerMessage)
+        let other = NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo: [NSLocalizedDescriptionKey: "gone"])
+        XCTAssertEqual(Deleter.explainTrashFailure(other, path: "/x", held: false), "gone")
+        XCTAssertEqual(Deleter.explainTrashFailure(nil, path: "/x", held: false), "Could not move to Trash")
+        XCTAssertEqual(Deleter.posixCode(of: NSError(domain: NSPOSIXErrorDomain, code: Int(ENOENT))), ENOENT)
+        XCTAssertNil(Deleter.posixCode(of: other))
     }
 }

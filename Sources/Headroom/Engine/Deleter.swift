@@ -23,6 +23,12 @@ struct DeleteResult {
     var removedDirectories = 0
     var freedBytes: Int64 = 0
     var errors: [(path: String, message: String)] = []
+    /// Paths of the selected roots, for "Reveal in Finder" after a refusal.
+    var roots: [String] = []
+    /// True when the delete stopped because every removal was held and refused.
+    var stalled = false
+    /// The security products most likely responsible for a refusal; empty when none is installed.
+    var blockedBy: [SecuritySuite] = []
 }
 
 final class DeleteCounters: @unchecked Sendable {
@@ -59,10 +65,12 @@ struct Deleter {
 
     private func trash(_ nodes: [FileNode]) async -> DeleteResult {
         var result = DeleteResult()
+        result.roots = nodes.map(\.path)
         counters.setTotal(nodes.count)
         // NSWorkspace.recycle is the async, Finder-backed API; FileManager.trashItem can
         // block indefinitely when called off the main thread.
         let urls = nodes.map(\.url)
+        let t0 = DispatchTime.now().uptimeNanoseconds
         let (moved, error): ([URL: URL], Error?) = await withCheckedContinuation { cont in
             DispatchQueue.main.async {
                 NSWorkspace.shared.recycle(urls) { newURLs, err in
@@ -70,17 +78,64 @@ struct Deleter {
                 }
             }
         }
+        // A rename into the Trash takes microseconds. Seconds mean something outside the
+        // kernel held the call before refusing it, which is what a ransomware shield does.
+        let held = DispatchTime.now().uptimeNanoseconds - t0 >= control.slowThreshold
         for node in nodes {
             if moved[node.url] != nil {
                 result.removedFiles += node.fileCount
                 result.removedDirectories += node.directoryCount + (node.isDirectory ? 1 : 0)
                 result.freedBytes += node.allocatedSize
             } else {
-                result.errors.append((node.path, error?.localizedDescription ?? "Could not move to Trash"))
+                result.errors.append((node.path, Self.explainTrashFailure(error, path: node.path, held: held)))
             }
             counters.tick(bytes: node.allocatedSize)
         }
+        // A held refusal with a security product installed: name it and say where to allow Headroom.
+        let suspects = SecuritySuites.suspects
+        if held, !suspects.isEmpty, result.errors.contains(where: { $0.message == Self.trashBlockedMessage }) {
+            result.blockedBy = suspects
+            result.errors = result.errors.map { e in
+                e.message == Self.trashBlockedMessage ? (e.path, SecuritySuites.trashBlockedMessage(for: suspects)) : e
+            }
+        }
         return result
+    }
+
+    /// Where the landing page explains how to allow Headroom in an antivirus or ransomware shield.
+    static let trashHelpURL = URL(string: "https://headroom-app.org/#faq-trash-blocked")!
+
+    static let trashBlockedMessage = "A security product (antivirus or ransomware shield such as AVG, Avast, Bitdefender or Norton) " +
+        "held the request for seconds and then refused to let Headroom move this item to the Trash. " +
+        "Allow Headroom in its settings, or use Reveal in Finder and delete the item there: Finder is allowed through."
+    static let trashOwnerMessage = "This item, or the folder it is in, belongs to another user. " +
+        "Delete it in Finder, which can ask for an administrator password."
+    static let trashPrivacyMessage = "macOS refused to move this item to the Trash. If it is in Documents, Desktop or Downloads, " +
+        "allow Headroom under System Settings › Privacy & Security › Files and Folders; otherwise delete it in Finder."
+
+    /// Turns the Cocoa error from a refused trash move into a message that names the real cause.
+    /// macOS reports an antivirus refusal, a privacy-folder denial and a root-owned item with
+    /// the same words ("You don't have permission…"), and only the first can be fixed in Headroom's
+    /// settings, so the user is sent to the right place. `held` says the call took seconds, the
+    /// signature of an Endpoint Security client deciding before the kernel refused.
+    static func explainTrashFailure(_ error: Error?, path: String, held: Bool) -> String {
+        guard let error else { return "Could not move to Trash" }
+        switch posixCode(of: error as NSError) {
+        case EPERM where held: return trashBlockedMessage
+        case EPERM: return trashPrivacyMessage
+        case EACCES: return trashOwnerMessage
+        default: return error.localizedDescription
+        }
+    }
+
+    /// The errno behind a Cocoa file error, following the underlying-error chain.
+    static func posixCode(of error: NSError) -> Int32? {
+        var e: NSError? = error
+        while let current = e {
+            if current.domain == NSPOSIXErrorDomain { return Int32(current.code) }
+            e = current.userInfo[NSUnderlyingErrorKey] as? NSError
+        }
+        return nil
     }
 
     // MARK: Permanent, parallel
@@ -94,6 +149,7 @@ struct Deleter {
 
     private func remove(_ nodes: [FileNode]) async -> DeleteResult {
         var result = DeleteResult()
+        result.roots = nodes.map(\.path)
         var dirJobs: [DirJob] = []
         var looseFiles: [(path: String, bytes: Int64)] = []   // selected roots that are files
         var totalFiles = 0
@@ -123,9 +179,27 @@ struct Deleter {
 
         let errorLock = OSAllocatedUnfairLock(initialState: [(path: String, message: String)]())
         let counters = self.counters
+        let stall = control
+
+        // Pre-flight: one unlink on its own before fanning out. A refusal that was held for
+        // seconds (EPERM after a wait) means something outside the kernel is deciding; stop now
+        // rather than queue thousands of files behind it.
+        if !stall.aborted, let probe = Self.probeTarget(dirJobs: &dirJobs, looseFiles: &looseFiles) {
+            let removed = await Task.detached(priority: .userInitiated) { () -> Bool in
+                if let dir = probe.dir {
+                    let fd = open(dir, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)
+                    guard fd >= 0 else { return false }
+                    defer { close(fd) }
+                    return stall.timed(decisive: true) { Self.unlinkAt(fd, probe.name, dirPath: dir) }
+                }
+                return stall.timed(decisive: true) { Self.unlinkPath(probe.path) }
+            }.value
+            if removed { result.removedFiles += 1; result.freedBytes += probe.bytes }
+            else { errorLock.withLock { $0.append((probe.path, String(cString: strerror(errno)))) } }
+            counters.tick(bytes: removed ? probe.bytes : 0, current: probe.path)
+        }
         let jobs = dirJobs
         let loose = looseFiles
-        let stall = control
 
         // Step 2: unlink files. One dirfd per directory, directories in parallel.
         let (files, bytes) = await Task.detached(priority: .userInitiated) { () -> (Int, Int64) in
@@ -167,8 +241,8 @@ struct Deleter {
             }
             return ok.withLock { $0 }
         }.value
-        result.removedFiles = files
-        result.freedBytes = bytes
+        result.removedFiles += files
+        result.freedBytes += bytes
 
         // Step 3: directories, deepest first; each level in parallel.
         // Skipped after a stall: the directories are not empty, and the Foundation fallback
@@ -215,15 +289,33 @@ struct Deleter {
             }
             return e
         }
-        if let reason = stall.abortReason {
-            result.errors.insert((nodes.first?.path ?? "", reason), at: 0)
+        if stall.cancelled {
+            result.errors.insert((nodes.first?.path ?? "", Self.cancelMessage), at: 0)
+        } else if stall.stalled {
+            result.stalled = true
+            result.blockedBy = SecuritySuites.suspects
+            result.errors.insert((nodes.first?.path ?? "", SecuritySuites.stallMessage(for: result.blockedBy)), at: 0)
         }
         return result
     }
 
-    static let stallMessage = "Deleting stopped: every file removal was held for seconds and then refused. " +
-        "A security product (antivirus or Endpoint Security extension, such as a ransomware shield) is " +
-        "blocking Headroom from deleting files. Allow Headroom in it, or use Move to Trash instead."
+    /// The first file to try alone. It is taken out of its job so it is not unlinked twice.
+    private struct ProbeTarget { let path: String; let name: String; let dir: String?; let bytes: Int64 }
+    private static func probeTarget(dirJobs: inout [DirJob], looseFiles: inout [(path: String, bytes: Int64)]) -> ProbeTarget? {
+        if let i = dirJobs.firstIndex(where: { !$0.files.isEmpty }) {
+            let job = dirJobs[i], f = job.files[0]
+            dirJobs[i] = DirJob(path: job.path, files: Array(job.files.dropFirst()), depth: job.depth)
+            return ProbeTarget(path: job.path + "/" + f.name, name: f.name, dir: job.path, bytes: f.bytes)
+        }
+        if let f = looseFiles.first {
+            looseFiles.removeFirst()
+            return ProbeTarget(path: f.path, name: (f.path as NSString).lastPathComponent, dir: nil, bytes: f.bytes)
+        }
+        return nil
+    }
+
+    /// Generic wording; the real message names the installed product (see SecuritySuites).
+    static var stallMessage: String { SecuritySuites.stallMessage(for: []) }
     static let cancelMessage = "Deleting was cancelled. Files already removed are gone; the rest are untouched."
 
     /// Lets the UI cancel a running delete, and notices when unlinks are being held for seconds
@@ -243,25 +335,26 @@ struct Deleter {
         var aborted: Bool { lock.withLock { $0.stalled || $0.cancelled } }
         var stalled: Bool { lock.withLock { $0.stalled } }
         var cancelled: Bool { lock.withLock { $0.cancelled } }
-        var abortReason: String? {
-            lock.withLock { $0.cancelled ? Deleter.cancelMessage : $0.stalled ? Deleter.stallMessage : nil }
-        }
-
         func cancel() { lock.withLock { $0.cancelled = true } }
 
         /// Runs one unlink, timing it, and returns its result. A success resets the streak, so a
         /// security product that scans slowly but allows the deletes never trips the abort.
-        func timed(_ unlink: () -> Bool) -> Bool {
+        /// A `decisive` call (the pre-flight probe) stalls on a single held refusal, but only a
+        /// permission-style one: an I/O timeout on a flaky volume is a different problem.
+        func timed(decisive: Bool = false, _ unlink: () -> Bool) -> Bool {
             let t0 = DispatchTime.now().uptimeNanoseconds
             let ok = unlink()
+            let refused = errno
             let elapsed = DispatchTime.now().uptimeNanoseconds - t0
             lock.withLock {
                 if ok { $0.streak = 0 }
                 else if elapsed >= self.slowThreshold {
                     $0.streak += 1
                     if $0.streak >= Self.refusalsBeforeAbort { $0.stalled = true }
+                    if decisive && (refused == EPERM || refused == EACCES) { $0.stalled = true }
                 }
             }
+            errno = refused
             return ok
         }
     }

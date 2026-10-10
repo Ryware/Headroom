@@ -33,14 +33,16 @@ struct InspectorView: View {
     var body: some View {
         if let node = state.selectedNode {
             let info = SafetyKB.info(for: node)
+            // The scanned root goes by its location name ("Macintosh HD", not "/").
+            let location = node === state.root ? state.rootLocation : nil
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack(alignment: .top, spacing: 10) {
-                        Image(systemName: node.iconName)
+                        Image(systemName: location?.symbol ?? node.iconName)
                             .font(.system(size: 28))
                             .foregroundStyle(node.isDirectory && !node.isPackage ? Color.accentColor : node.effectiveCategory.color)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(node.name).font(.headline).lineLimit(2)
+                            Text(location?.name ?? node.name).font(.headline).lineLimit(2)
                             Text(node.allocatedSize.humanBytes).font(.title3.monospacedDigit())
                         }
                     }
@@ -65,7 +67,11 @@ struct InspectorView: View {
 
                     GroupBox("Details") {
                         Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 6) {
-                            row("Location", node.url.deletingLastPathComponent().path)
+                            if let location {
+                                row("Scanned", location.detail)
+                            } else {
+                                row("Location", node.url.deletingLastPathComponent().path)
+                            }
                             row("Category", node.effectiveCategory.title)
                             if node.isDirectory {
                                 row("Files", node.fileCount.formatted())

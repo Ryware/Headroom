@@ -37,6 +37,8 @@ struct DeleteProgress: Equatable {
 final class AppState: ObservableObject {
     @Published var root: FileNode?
     @Published var rootURL: URL?
+    /// What `rootURL` is, named for people ("Macintosh HD", not "/").
+    @Published private(set) var rootLocation: ScanLocation?
     @Published var phase: ScanPhase = .idle
     @Published var progress = ScanProgress()
     @Published var selection: Set<FileNode.ID> = [] {
@@ -151,6 +153,7 @@ final class AppState: ObservableObject {
         activateSecurityScope(for: url)
 #endif
         rootURL = url
+        rootLocation = ScanLocation(url: url)
         rememberRecentScan(url)
         root = nil
         selection = []

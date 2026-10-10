@@ -113,6 +113,33 @@ jobs:
           fi
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url -q .url
 
+      # Optional: Ryware/homebrew-tap updates its own cask every 3 hours. With a HOMEBREW_TAP_TOKEN
+      # secret (Contents: read and write on that repo) this pushes the new cask right away instead.
+      - name: Update Homebrew cask
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          VERSION: ${{ steps.notes.outputs.version }}
+        run: |
+          if [ -z "$TAP_TOKEN" ]; then
+            echo "No HOMEBREW_TAP_TOKEN; the tap picks up this release on its own within 3 hours."; exit 0
+          fi
+          set -e
+          SHA=$(cut -d' ' -f1 "dist/Headroom-$VERSION.dmg.sha256")
+          git clone "https://x-access-token:$TAP_TOKEN@github.com/Ryware/homebrew-tap.git" "$RUNNER_TEMP/tap"
+          mkdir -p "$RUNNER_TEMP/tap/Casks"
+          sed -e "s/@VERSION@/$VERSION/" -e "s/@SHA256@/$SHA/" packaging/homebrew/headroom.rb \
+            > "$RUNNER_TEMP/tap/Casks/headroom.rb"
+          cd "$RUNNER_TEMP/tap"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/headroom.rb
+          if git diff --cached --quiet; then
+            echo "Cask already at $VERSION"
+          else
+            git commit -m "headroom $VERSION"
+            git push origin HEAD
+          fi
+
       - name: Upload DMG as workflow artifact
         if: always()
         uses: actions/upload-artifact@v7

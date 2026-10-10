@@ -5,8 +5,8 @@
     <key>CFBundleName</key><string>Headroom</string>
     <key>CFBundleDisplayName</key><string>Headroom</string>
     <key>CFBundleIdentifier</key><string>dev.ryware.disktree</string>
-    <key>CFBundleVersion</key><string>6</string>
-    <key>CFBundleShortVersionString</key><string>1.0.3</string>
+    <key>CFBundleVersion</key><string>8</string>
+    <key>CFBundleShortVersionString</key><string>1.0.5</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleExecutable</key><string>Headroom</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
