@@ -1,12 +1,13 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 — October 11, 2026
 
 ### 🚀 New feature
 
 - **MCP server for AI agents.** `Headroom --mcp` serves the Model Context Protocol on stdio, so Claude Code, Claude Desktop, Cursor and other MCP clients can check free space, scan folders, find cleanup candidates and duplicates, and ask whether a path is safe to delete, using the same engine and safety rules as the app. The only write is `move_to_trash`, which is recoverable and refuses items marked *Do not delete*. See [Use with AI agents](README.md#use-with-ai-agents-mcp-and-command-line).
 - **Command line tool for agents.** The app binary takes commands (`Headroom status`, `scan`, `cleanup`, `duplicates`, `explain`, `trash` and more) and prints JSON, for agents that run shell commands. The app carries instructions for agents in `Contents/Resources/AGENTS.md`, so an agent asked to use Headroom finds out how by itself.
 - **Agent work shows in the window.** When the window is empty or shows the same folder, an agent's scan and duplicate search run there, so you see their progress and results.
+- **Private to you.** While the app is open it also serves MCP on 127.0.0.1, and every request must carry a session token stored where only you can read it. **Settings → AI agents** turns it off. The App Store build does not include any of this.
 
 ### ✨ Changed
 
@@ -15,6 +16,10 @@
 ### 🐛 Fixed
 
 - **Updating no longer opens the tour at the welcome page.** Updated users, and **Help → What's New in Headroom**, now land on What's New as intended. Users who updated to 1.0.5 see it once on their next update.
+
+### 🙏 Thanks
+
+The agent support comes from [@SonyStone](https://github.com/SonyStone), who designed and built the MCP server, the command line tool and the bundled instructions (#1). Thank you!
 
 ## 1.0.5 — October 7, 2026
 
