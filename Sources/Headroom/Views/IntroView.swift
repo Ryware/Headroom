@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Bump when "What's new" changes; the intro re-opens on the What's New page for existing users.
-let currentIntroVersion = 8
+let currentIntroVersion = 9
 
 struct IntroPage: Identifiable {
     let id: Int
@@ -15,7 +15,7 @@ struct IntroStep: Identifiable {
     let title: String
     let bullets: [(symbol: String, text: String)]
     let art: Art
-    enum Art { case hero, scan, tree, treemap, safety, clean, menuBar, duplicates, whatsNew }
+    enum Art { case hero, scan, tree, treemap, safety, clean, menuBar, duplicates, whatsNew, agents }
 }
 
 private let steps: [IntroStep] = [
@@ -60,6 +60,11 @@ private let steps: [IntroStep] = [
                         ("arrow.uturn.backward", "Go back with ⌘[ or ⌘←, forward with ⌘], any view with ⌘1–⌘7"),
                         ("doc.on.doc", "Duplicates picks the extra copies for you in one click")],
               art: .whatsNew),
+    IntroStep(id: 8, eyebrow: "NEW IN 1.1", title: "Works with your AI agent",
+              bullets: [("terminal", "Claude Code, Cursor and Codex can run Headroom: a command line tool and an MCP server"),
+                        ("checkmark.shield.fill", "Same scanner, same safety verdicts. Nothing to set up: the app explains itself to agents"),
+                        ("trash", "Agents only read. The one exception moves items to the Trash, recoverable")],
+              art: .agents),
 ]
 
 struct IntroView: View {
@@ -166,6 +171,8 @@ struct IntroView: View {
                 DuplicatesArt(tick: artTick).frame(width: 250, height: 230)
             case .whatsNew:
                 NavigationArt(tick: artTick).frame(width: 260, height: 240)
+            case .agents:
+                AgentArt(tick: artTick).frame(width: 260, height: 220)
             }
         }
         .id(page)
@@ -547,6 +554,45 @@ private struct NavigationArt: View {
 }
 
 /// App icon with an orbiting light — reads as "working", not a static picture.
+/// A terminal runs a Headroom command; the answer lands line by line, then the total.
+private struct AgentArt: View {
+    let tick: Int
+    private let rows: [(name: String, size: String)] = [("node_modules", "23.6 GB"), ("DerivedData", "11.2 GB"), ("Caches/Homebrew", "4.1 GB")]
+    var body: some View {
+        let phase = tick % 6   // 0: prompt, 1-3: rows appear, 4-5: total
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(spacing: 6) {
+                Text("$").foregroundStyle(.white.opacity(0.55))
+                Text("headroom cleanup ~")
+            }
+            ForEach(Array(rows.enumerated()), id: \.offset) { i, row in
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.shield.fill").foregroundStyle(.green)
+                    Text(row.name)
+                    Spacer(minLength: 8)
+                    Text(row.size).foregroundStyle(.white.opacity(0.8))
+                }
+                .opacity(phase > i ? 1 : 0)
+                .offset(x: phase > i ? 0 : -8)
+                .animation(.easeOut(duration: 0.35), value: phase)
+            }
+            Divider().overlay(.white.opacity(0.25))
+            HStack {
+                Text("Reclaimable").foregroundStyle(.white.opacity(0.8))
+                Spacer()
+                Text("38.9 GB").fontWeight(.semibold)
+            }
+            .opacity(phase >= 4 ? 1 : 0)
+            .animation(.easeOut(duration: 0.35), value: phase)
+        }
+        .font(.system(size: 13, weight: .medium, design: .monospaced))
+        .foregroundStyle(.white)
+        .padding(18)
+        .background(RoundedRectangle(cornerRadius: 14).fill(.black.opacity(0.35)))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(.white.opacity(0.18)))
+    }
+}
+
 private struct HeroLoader: View {
     @State private var spin = false
     var body: some View {
