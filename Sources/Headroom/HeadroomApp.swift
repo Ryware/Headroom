@@ -5,12 +5,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppDelegate.applyDockPolicy()
         Task { @MainActor in DiskMonitor.shared.start() }
+#if !APP_STORE
+        if Pref.bool("mcpServerEnabled", true) { MCPHTTPServer.shared.start() }
+#endif
         // Started by "Open at login": stay in the menu bar instead of popping the window open.
         if Self.launchedAtLogin, Pref.bool("menuBarEnabled", true) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 NSApp.windows.filter { $0.canBecomeMain }.forEach { $0.close() }
             }
         }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+#if !APP_STORE
+        MCPHTTPServer.shared.stop()   // drops the session token file
+#endif
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -33,6 +42,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 @main
+enum HeadroomMain {
+    static func main() {
+        // `Headroom --mcp` serves the Model Context Protocol on stdio instead of opening the UI.
+        if CommandLine.arguments.dropFirst().contains("--mcp") { MCPServer.runStdio() }
+        // `headroom <command>` runs one tool from the command line (see HeadroomCLI).
+        let argv = Array(CommandLine.arguments.dropFirst())
+        if HeadroomCLI.handles(argv) { HeadroomCLI.run(argv) }
+        HeadroomApp.main()
+    }
+}
+
 struct HeadroomApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var state = AppState()
@@ -51,6 +71,7 @@ struct HeadroomApp: App {
                 .sheet(item: $introPage, onDismiss: { seenIntroVersion = currentIntroVersion }) {
                     IntroView(page: $0.id)
                 }
+                .task { MCPServer.app = state }
                 .task {
                     // First launch → full tour; updated app → jump to What's New.
                     try? await Task.sleep(for: .milliseconds(600))
@@ -104,6 +125,7 @@ struct SettingsView: View {
     @AppStorage("alertsLowGB") private var lowGB = 10.0
     @AppStorage("alertsDropEnabled") private var dropEnabled = true
     @AppStorage("alertsDropGB") private var dropGB = 5.0
+    @AppStorage("mcpServerEnabled") private var mcpServerEnabled = true
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
@@ -141,11 +163,27 @@ struct SettingsView: View {
                 Text("Alerts are local notifications. Nothing leaves your Mac.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+
+#if !APP_STORE
+            Section("AI agents") {
+                Toggle("Let AI agents work in this window", isOn: $mcpServerEnabled)
+                if mcpServerEnabled, let error = MCPHTTPServer.lastError {
+                    Text(error).font(.caption).foregroundStyle(.orange)
+                }
+                Text("Agents such as Codex and Claude Code can use Headroom without setup: the app carries instructions for them. When this is on, they work with the folder shown here and you see their results. They can read scan results and safety advice; the only change they can make is moving items to the Trash.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+#endif
         }
         .formStyle(.grouped)
-        .frame(width: 480, height: 600)
+        .frame(width: 480, height: 720)
         .onChange(of: menuBarEnabled) { _, _ in AppDelegate.applyDockPolicy() }
         .onChange(of: showInDock) { _, _ in AppDelegate.applyDockPolicy() }
+        .onChange(of: mcpServerEnabled) { _, on in
+#if !APP_STORE
+            if on { MCPHTTPServer.shared.start() } else { MCPHTTPServer.shared.stop() }
+#endif
+        }
         .onChange(of: lowEnabled) { _, on in if on { DiskMonitor.shared.requestNotificationAuthorization() } }
         .onChange(of: dropEnabled) { _, on in if on { DiskMonitor.shared.requestNotificationAuthorization() } }
     }

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 🚀 New feature
+
+- **MCP server for AI agents.** `Headroom --mcp` serves the Model Context Protocol on stdio, so Claude Code, Claude Desktop, Cursor and other MCP clients can check free space, scan folders, find cleanup candidates and duplicates, and ask whether a path is safe to delete, using the same engine and safety rules as the app. The only write is `move_to_trash`, which is recoverable and refuses items marked *Do not delete*. See [Use with AI agents](README.md#use-with-ai-agents-mcp-and-command-line).
+- **Command line tool for agents.** The app binary takes commands (`Headroom status`, `scan`, `cleanup`, `duplicates`, `explain`, `trash` and more) and prints JSON, for agents that run shell commands. The app carries instructions for agents in `Contents/Resources/AGENTS.md`, so an agent asked to use Headroom finds out how by itself.
+- **Agent work shows in the window.** When the window is empty or shows the same folder, an agent's scan and duplicate search run there, so you see their progress and results.
+
 ### ✨ Changed
 
 - **The What's New page has its own animation**: a small Headroom window where a dashboard tile opens its view and Back returns, instead of a sparkle icon.

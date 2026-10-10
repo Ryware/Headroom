@@ -126,7 +126,9 @@ final class DiskMonitor: ObservableObject {
     }
 
     /// Change in free space over roughly the last `hours`, if the history is long enough.
-    func delta(hours: Double) -> Int64? {
+    func delta(hours: Double) -> Int64? { Self.delta(in: history, hours: hours) }
+
+    nonisolated static func delta(in history: [FreeSpaceSample], hours: Double) -> Int64? {
         guard let last = history.last, let first = history.first,
               last.t.timeIntervalSince(first.t) >= hours * 3600 * 0.5 else { return nil }
         let target = last.t.addingTimeInterval(-hours * 3600)
@@ -134,7 +136,7 @@ final class DiskMonitor: ObservableObject {
         return last.free - base.free
     }
 
-    private static var historyURL: URL? {
+    nonisolated private static var historyURL: URL? {
         guard let dir = try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
                                                      appropriateFor: nil, create: true) else { return nil }
         let folder = dir.appendingPathComponent("Headroom", isDirectory: true)
@@ -147,7 +149,7 @@ final class DiskMonitor: ObservableObject {
         return folder.appendingPathComponent("free-space-history.json")
     }
 
-    private static func loadHistory() -> [FreeSpaceSample] {
+    nonisolated static func loadHistory() -> [FreeSpaceSample] {
         guard let url = historyURL, let data = try? Data(contentsOf: url),
               let samples = try? JSONDecoder().decode([FreeSpaceSample].self, from: data) else { return [] }
         return samples

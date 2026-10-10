@@ -59,6 +59,7 @@ Headroom turns a crowded drive into an understandable map. Scan a folder or disk
 - **Clean developer clutter** — discover caches, DerivedData, `node_modules`, package stores, build output, logs, virtual machines, and other regenerable data.
 - **Find duplicates** — byte-for-byte identical files (size → header hash → samples → full SHA-256), grouped and ranked by reclaimable space, with one-click "keep newest" selection and a keep-one-copy guard.
 - **Watch it from the menu bar** — a live free-space ring, 7-day trend, low-space and sudden-drop alerts, and one-click cleanup of safe caches.
+- **Works with AI agents** — a command line tool and an MCP server give Claude Code, Claude Desktop, Cursor, Codex and any MCP client the same scanner, cleanup finder, duplicate finder and safety verdicts. The app carries its own `AGENTS.md`, so an agent needs no setup. See [Use with AI agents](#use-with-ai-agents-mcp-and-command-line).
 - **Stay in control** — choose recoverable Trash mode or an explicit permanent-delete mode.
 - **Keep data private** — analysis happens locally on your Mac; Headroom does not require an account or send scan data anywhere.
 
@@ -317,6 +318,59 @@ To update, download the new DMG and replace the app. To uninstall, drag Headroom
 - **`brew` says "command not found":** finish the Homebrew installer's "Next steps" (it prints two commands that add `brew` to your PATH), then open a new Terminal window.
 - **Building yourself:** `./build.sh` places an ad-hoc signed development build in `build/Headroom.app` (see [Build from source](#build-from-source)).
 
+## Use with AI agents (MCP and command line)
+
+Agents can analyze your disk with the same scanner and safety rules as the app, through a command line tool or a [Model Context Protocol](https://modelcontextprotocol.io) server. While the app is open, both use the folder shown in its window, and a duplicate search an agent starts shows up there.
+
+Agents need no setup: the app carries instructions for them in `Headroom.app/Contents/Resources/AGENTS.md`, so an agent that looks for Headroom finds out how to use it. To make an agent load Headroom's tools in every session, register the MCP server below.
+
+### Command line
+
+The app binary is also a command line tool. Every command prints JSON:
+
+```sh
+H=/Applications/Headroom.app/Contents/MacOS/Headroom
+$H help                          # commands; `$H help <command>` for options
+$H status                        # free space on the startup disk
+$H scan ~ --limit 10             # sizes, categories, largest items, reclaimable total
+$H cleanup ~/Developer           # node_modules, DerivedData, caches… with safety advice
+$H duplicates ~/Downloads --min-size-mb 50
+$H explain ~/Library/Caches
+$H trash ~/Downloads/old.dmg --yes   # recoverable; --yes is required
+```
+
+### MCP server
+
+Run the app binary with `--mcp`; it talks JSON-RPC on stdio and opens no window. While the app is open it also serves MCP over HTTP at `http://127.0.0.1:47120/mcp`. HTTP requests must carry `Authorization: Bearer <token>`, where the token is the contents of `~/Library/Application Support/Headroom/mcp-token`, a file only you can read; the command line tool and `--mcp` read it for you.
+
+```sh
+claude mcp add headroom -- /Applications/Headroom.app/Contents/MacOS/Headroom --mcp
+```
+
+For clients configured with JSON (Claude Desktop, Cursor, …):
+
+```json
+{
+  "mcpServers": {
+    "headroom": {
+      "command": "/Applications/Headroom.app/Contents/MacOS/Headroom",
+      "args": ["--mcp"]
+    }
+  }
+}
+```
+
+| Tool | What it does |
+| --- | --- |
+| `disk_status` | Free, used and total space on a volume |
+| `scan_folder` | Size, largest subfolders and files, space by category |
+| `find_cleanup` | Caches, `node_modules`, DerivedData, build output, logs and Trash, with safety advice. Without a path, checks the well-known cache locations |
+| `explain_path` | What a file or folder is and whether it is safe to delete |
+| `find_duplicates` | Byte-for-byte identical files, ranked by wasted space |
+| `move_to_trash` | Moves items to the Trash (recoverable). Refuses anything marked *Do not delete* and top-level system and home folders |
+
+Everything except `move_to_trash` is read-only, and permanent deletion is not exposed. Like the app, the server reads only what macOS lets it: grant Headroom Full Disk Access to scan protected locations. The sandboxed App Store build can only scan paths the sandbox allows; use the direct download for MCP.
+
 ## Build from source
 
 Requires Xcode 15 or newer.
@@ -362,6 +416,10 @@ Sources/Headroom
 │   ├── Deleter.swift
 │   ├── SafetyInfo.swift
 │   └── Scanner.swift
+├── MCP
+│   ├── MCPServer.swift        the ten tools and the JSON-RPC handler
+│   ├── MCPHTTPServer.swift    loopback HTTP transport while the app is open
+│   └── HeadroomCLI.swift      `Headroom <command>`: the tools as shell commands
 └── Views
     ├── DashboardView.swift
     ├── OutlineTreeView.swift

@@ -190,6 +190,12 @@ final class AppState: ObservableObject {
         if let rootURL { scan(rootURL) }
     }
 
+    /// Waits for the running scan, if any, and returns the tree it produced (nil if it was cancelled or failed).
+    func waitForScan() async -> FileNode? {
+        await scanTask?.value
+        return phase == .done ? root : nil
+    }
+
     func cancelScan() {
         scanTask?.cancel()
         scanTask = nil
@@ -289,6 +295,13 @@ final class AppState: ObservableObject {
                 if let result { self.duplicates = result }
             }
         }
+    }
+
+    /// Starts a duplicate search (or joins the running one) and returns its result once done.
+    func findDuplicatesAndWait() async -> DuplicateScanResult? {
+        if duplicateProgress == nil { findDuplicates() }
+        await duplicateTask?.value
+        return duplicates
     }
 
     func cancelDuplicateScan() {
