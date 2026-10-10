@@ -51,6 +51,7 @@ Headroom turns a crowded drive into an understandable map. Scan a folder or disk
 - **Clean developer clutter** — discover caches, DerivedData, `node_modules`, package stores, build output, logs, virtual machines, and other regenerable data.
 - **Find duplicates** — byte-for-byte identical files (size → header hash → samples → full SHA-256), grouped and ranked by reclaimable space, with one-click "keep newest" selection and a keep-one-copy guard.
 - **Watch it from the menu bar** — a live free-space ring, 7-day trend, low-space and sudden-drop alerts, and one-click cleanup of safe caches.
+- **Works with AI agents** — a command line tool and an MCP server give Claude Code, Claude Desktop, Cursor, Codex and any MCP client the same scanner, cleanup finder, duplicate finder and safety verdicts. The app carries its own `AGENTS.md`, so an agent needs no setup. See [Use with AI agents](#use-with-ai-agents-mcp-and-command-line).
 - **Stay in control** — choose recoverable Trash mode or an explicit permanent-delete mode.
 - **Keep data private** — analysis happens locally on your Mac; Headroom does not require an account or send scan data anywhere.
 
@@ -311,7 +312,9 @@ Sources/Headroom
 │   ├── SafetyInfo.swift
 │   └── Scanner.swift
 ├── MCP
-│   └── MCPServer.swift
+│   ├── MCPServer.swift        the ten tools and the JSON-RPC handler
+│   ├── MCPHTTPServer.swift    loopback HTTP transport while the app is open
+│   └── HeadroomCLI.swift      `Headroom <command>`: the tools as shell commands
 └── Views
     ├── DashboardView.swift
     ├── OutlineTreeView.swift

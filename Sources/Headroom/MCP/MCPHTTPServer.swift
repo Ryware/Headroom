@@ -22,10 +22,14 @@ final class MCPHTTPServer: @unchecked Sendable {
 
     /// Where the running app leaves the session token for the CLI and `--mcp` (mode 0600).
     static var tokenURL: URL? {
+        if let dir = tokenDirectory { return dir.appendingPathComponent("mcp-token") }
         guard let dir = try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
                                                      appropriateFor: nil, create: true) else { return nil }
         return dir.appendingPathComponent("Headroom", isDirectory: true).appendingPathComponent("mcp-token")
     }
+
+    /// Tests point this at a temporary folder so they never touch the user's token.
+    static var tokenDirectory: URL?
 
     private let queue = DispatchQueue(label: "dev.ryware.headroom.mcp-http")
     private var listener: NWListener?
