@@ -21,6 +21,8 @@ mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Resources"
 cp "$BIN/$APP" "$BUNDLE/Contents/MacOS/$APP"
 cp Info.plist "$BUNDLE/Contents/"
 cp Assets/AppIcon.icns "$BUNDLE/Contents/Resources/"
+# How agents that find the app can use its command line tool.
+cp Assets/AGENTS.md "$BUNDLE/Contents/Resources/"
 codesign --force --deep --sign - "$BUNDLE"
 echo "==> $BUNDLE ($(lipo -archs "$BUNDLE/Contents/MacOS/$APP"))"
 [ "$1" = "run" ] && open "$BUNDLE" || true
