@@ -235,7 +235,7 @@ $H trash ~/Downloads/old.dmg --yes   # recoverable; --yes is required
 
 ### MCP server
 
-Run the app binary with `--mcp`; it talks JSON-RPC on stdio and opens no window. While the app is open it also serves MCP over HTTP at `http://127.0.0.1:47120/mcp`.
+Run the app binary with `--mcp`; it talks JSON-RPC on stdio and opens no window. While the app is open it also serves MCP over HTTP at `http://127.0.0.1:47120/mcp`. HTTP requests must carry `Authorization: Bearer <token>`, where the token is the contents of `~/Library/Application Support/Headroom/mcp-token`, a file only you can read; the command line tool and `--mcp` read it for you.
 
 ```sh
 claude mcp add headroom -- /Applications/Headroom.app/Contents/MacOS/Headroom --mcp

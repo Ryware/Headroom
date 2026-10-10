@@ -115,6 +115,24 @@ final class MCPServerTests: XCTestCase {
         XCTAssertEqual((out["refused"] as? [[String: Any]])?.count, 4)
     }
 
+    func testRefusalSeesThroughCaseAndSymlinks() throws {
+        let home = NSHomeDirectory()
+        XCTAssertNotNil(MCPServer.refusal(for: home + "/Library"))
+        // APFS ignores case by default, so this names the real folder.
+        var isDir: ObjCBool = false
+        if FileManager.default.fileExists(atPath: home + "/LIBRARY", isDirectory: &isDir), isDir.boolValue {
+            XCTAssertNotNil(MCPServer.refusal(for: MCPServer.expand(home + "/LIBRARY")))
+        }
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("headroom-refusal-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+        let link = tmp.appendingPathComponent("lib")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: URL(fileURLWithPath: home + "/Library"))
+        XCTAssertNotNil(MCPServer.refusal(for: MCPServer.expand(link.path)), "a symlink to a protected folder names that folder")
+        XCTAssertNil(MCPServer.refusal(for: MCPServer.expand(tmp.path)))
+        XCTAssertNil(MCPServer.refusal(for: "/definitely/not/here"))
+    }
+
     func testMissingArgumentsAreToolErrors() async throws {
         let noPath = try await call("scan_folder", [:])
         XCTAssertTrue(noPath.isError)

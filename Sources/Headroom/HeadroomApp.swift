@@ -16,6 +16,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+#if !APP_STORE
+        MCPHTTPServer.shared.stop()   // drops the session token file
+#endif
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         !(Pref.bool("menuBarEnabled", true) && Pref.bool("keepRunning", true))
     }

@@ -633,10 +633,21 @@ enum MCPServer {
     /// Paths that are never deleted through MCP, whatever the rules say.
     static func refusal(for path: String) -> String? {
         let home = NSHomeDirectory()
-        let protected: Set<String> = ["/", home, "/System", "/Library", "/Applications", "/Users", "/private", "/usr", "/bin", "/sbin", "/etc", "/var", "/opt",
-                                      home + "/Library", home + "/Documents", home + "/Desktop", home + "/Downloads", home + "/Pictures", home + "/Movies", home + "/Music"]
-        if protected.contains(path) { return "Top-level system or home folder" }
-        return nil
+        let protected = ["/", home, "/System", "/Library", "/Applications", "/Users", "/private", "/usr", "/bin", "/sbin", "/etc", "/var", "/opt",
+                         home + "/Library", home + "/Documents", home + "/Desktop", home + "/Downloads", home + "/Pictures", home + "/Movies", home + "/Music"]
+        let reason = "Top-level system or home folder"
+        if protected.contains(path) { return reason }
+        // The same folder has many names: APFS ignores case by default (~/DOCUMENTS), and a path
+        // can go through a symlink. Compare what the path names, not how it is spelled.
+        guard let target = identity(of: path) else { return nil }
+        return protected.contains { identity(of: $0).map { $0 == target } ?? false } ? reason : nil
+    }
+
+    /// Device and inode of what `path` names, following symlinks.
+    private static func identity(of path: String) -> (dev_t, ino_t)? {
+        var st = stat()
+        guard stat(path, &st) == 0 else { return nil }
+        return (st.st_dev, st.st_ino)
     }
 
     private static func requiredPath(_ args: [String: Any]) throws -> String {

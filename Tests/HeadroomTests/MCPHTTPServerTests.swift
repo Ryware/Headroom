@@ -26,6 +26,30 @@ final class MCPHTTPServerTests: XCTestCase {
         XCTAssertEqual(String(data: request.body, encoding: .utf8), body)
     }
 
+    func testImpossibleContentLengthsAreBadRequestsNotCrashes() {
+        for length in ["-1", "99999999999999999999", "abc", "\(HTTPRequest.maxBody + 1)"] {
+            let raw = Data("POST /mcp HTTP/1.1\r\nHost: 127.0.0.1:47120\r\nContent-Length: \(length)\r\n\r\n".utf8)
+            guard case .invalid = HTTPRequest.read(raw) else { return XCTFail("Content-Length \(length) must be refused") }
+            XCTAssertNil(HTTPRequest.parse(raw))
+        }
+        guard case .incomplete = HTTPRequest.read(Data("POST /mcp HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 5\r\n\r\n{}".utf8)) else {
+            return XCTFail("a short body is still being received")
+        }
+        guard case .invalid = HTTPRequest.read(Data("garbage\r\n\r\n".utf8)) else { return XCTFail("no method and path") }
+    }
+
+    func testRequestsNeedTheSessionToken() {
+        XCTAssertTrue(MCPHTTPServer.authorized(header: "Bearer abc123", token: "abc123"))
+        XCTAssertTrue(MCPHTTPServer.authorized(header: "bearer abc123", token: "abc123"))
+        XCTAssertFalse(MCPHTTPServer.authorized(header: nil, token: "abc123"))
+        XCTAssertFalse(MCPHTTPServer.authorized(header: "Bearer abc124", token: "abc123"))
+        XCTAssertFalse(MCPHTTPServer.authorized(header: "Bearer abc1234", token: "abc123"))
+        XCTAssertFalse(MCPHTTPServer.authorized(header: "Bearer abc12", token: "abc123"))
+        XCTAssertFalse(MCPHTTPServer.authorized(header: "Basic abc123", token: "abc123"))
+        XCTAssertFalse(MCPHTTPServer.authorized(header: "Bearer abc123", token: nil), "not serving: nothing is valid")
+        XCTAssertFalse(MCPHTTPServer.authorized(header: "Bearer", token: "abc123"))
+    }
+
     func testRawMessagesRoundTrip() async throws {
         let response = await MCPServer.handle(Data(#"{"jsonrpc":"2.0","id":7,"method":"ping"}"#.utf8))
         let object = try XCTUnwrap(JSONSerialization.jsonObject(with: try XCTUnwrap(response)) as? [String: Any])
