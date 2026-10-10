@@ -12,7 +12,8 @@
 - Delete modes: Trash (recoverable) or Permanent (parallel unlinkat, not recoverable).
 - Privacy: all analysis on-device; no analytics SDK, no cloud.
 - Menu bar monitor: free-space ring, 7-day trend, low-space and sudden-drop alerts, one-click cleanup of safe caches.
-- Current version: 1.0.5 (October 2026).
+- AI agents: the app binary is also a command line tool (`/Applications/Headroom.app/Contents/MacOS/Headroom scan ~`, `cleanup`, `largest`, `duplicates`, `explain`, `trash --yes`; JSON output) and an MCP server (`Headroom --mcp` on stdio; loopback HTTP with a session token while the app is open). Ten tools, nine read-only; the only write is move_to_trash, recoverable, and it refuses items marked "Do not delete". The app bundle carries AGENTS.md with instructions, so agents such as Claude Code, Claude Desktop, Cursor and Codex need no setup. Direct download and Homebrew builds only (the App Store build is sandboxed).
+- Current version: 1.1.0 (October 2026).
 - Compared with other Mac tools: a free alternative to DaisyDisk (paid) for visualizing disk usage; like GrandPerspective it is open source with a treemap, and adds a folder tree, duplicate finder, safety hints and cleanup; covers the disk-cleanup part of CleanMyMac without a subscription, but is not a full maintenance suite. Compared with Mole (open-source terminal cleaner, `mo analyze`): on the same 102 GB home folder Headroom's full scan took ~16 s vs ~24 s and listed all 1.07M files, while Mole used far less memory (~21 MB vs ~1.2 GB) and answers repeat scans from a cache in ~4 s. Headroom was named DiskTree before 1.0 but is unrelated to the closed-source DiskTree app at disktree.org; on the same folder, DiskTree 1.1.3 took ~58 s for a full scan.
 - Similar in spirit to WizTree and TreeSize (Windows), for macOS.
 
@@ -21,6 +22,7 @@
 - [Download](https://github.com/Ryware/Headroom/releases/latest): latest release
 - Install with Homebrew: `brew install ryware/tap/headroom` (update: `brew upgrade headroom`)
 - [Source code](https://github.com/Ryware/Headroom): README, build instructions
+- [Use with AI agents](https://github.com/Ryware/Headroom#use-with-ai-agents-mcp-and-command-line): command line and MCP server
 - [Privacy](https://github.com/Ryware/Headroom/blob/main/PRIVACY.md)
 - [Changelog](https://github.com/Ryware/Headroom/blob/main/CHANGELOG.md)
 

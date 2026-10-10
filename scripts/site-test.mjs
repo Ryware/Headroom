@@ -134,7 +134,8 @@ async function newPage(opts = {}) {
   const h1Lines = await page.$eval('h1', (h) => Math.round(h.getBoundingClientRect().height / parseFloat(getComputedStyle(h).lineHeight)));
   check('hero headline is at most 3 lines on a phone', h1Lines <= 3, `${h1Lines} lines`);
   // phones: the duplicate finder autoplays once when it scrolls into view (no scroll pinning), then offers Replay
-  await page.evaluate(() => document.getElementById('duplicates').scrollIntoView());
+  // Jump there: the page scrolls smoothly, and a long smooth scroll would eat into the timing checked below.
+  await page.evaluate(() => document.getElementById('duplicates').scrollIntoView({ behavior: 'instant' }));
   const dupPass = () => page.$eval('#dup-stage', (d) => d.getAttribute('data-pass'));
   await sleep(1500);
   const midPass = await dupPass();

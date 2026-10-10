@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Headroom - Free Mac Disk Space Analyzer & Cleaner</title>
-<meta name="description" content="Free, open-source Mac disk space analyzer and cleaner. Treemap, duplicate finder, one-click cleanup. No Pro tier, no subscription, no tracking.">
-<meta name="keywords" content="free Mac disk cleaner, free disk space analyzer Mac, no subscription disk cleaner, open source disk cleaner macOS, all features free, no Pro version, Mac disk space analyzer, macOS storage visualizer, free disk cleaner Mac, treemap, find large files Mac, clean Xcode DerivedData, delete node_modules, WizTree for Mac, TreeSize alternative Mac, DaisyDisk alternative">
+<meta name="description" content="Free, open-source Mac disk space analyzer and cleaner. Treemap, duplicate finder, one-click cleanup, and an MCP server so AI agents can use it. No Pro tier, no subscription, no tracking.">
+<meta name="keywords" content="free Mac disk cleaner, free disk space analyzer Mac, no subscription disk cleaner, open source disk cleaner macOS, all features free, no Pro version, Mac disk space analyzer, macOS storage visualizer, free disk cleaner Mac, treemap, find large files Mac, clean Xcode DerivedData, delete node_modules, WizTree for Mac, TreeSize alternative Mac, DaisyDisk alternative, MCP server, works with AI agents, Claude Code disk cleanup, command line disk analyzer Mac">
 <meta name="author" content="Ryware">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <meta name="theme-color" content="#0f0f14" media="(prefers-color-scheme: dark)">
@@ -188,7 +188,7 @@ h1{font-size:clamp(36px,5.2vw,68px);line-height:1.02;font-weight:600;letter-spac
 
 /* bento: 6 cells, varied sizes, two with real screenshots */
 .bento{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:minmax(180px,auto);gap:14px}
-.cell{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;gap:10px;transition:border-color .25s,transform .35s var(--ease)}
+.cell{position:relative;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;gap:10px;transition:border-color .25s,transform .35s var(--ease)}
 .cell:hover{border-color:var(--line-strong);transform:translateY(-2px)}
 .cell p{color:var(--fg-2);font-size:15px}
 .cell .ic-lg{margin-bottom:4px}
@@ -372,6 +372,10 @@ h1{font-size:clamp(36px,5.2vw,68px);line-height:1.02;font-weight:600;letter-spac
 .brew-cmd code::before{content:"$ ";color:var(--fg-3)}
 .brew-copy{flex:none;font:500 13px/1 inherit;font-family:inherit;color:var(--fg-2);background:transparent;border:1px solid var(--line-strong);border-radius:7px;padding:7px 10px;cursor:pointer}
 .brew-copy:hover{color:var(--fg)}
+.agent-out{margin:4px 0 0;padding:14px 16px;border-radius:10px;background:rgba(0,0,0,.28);font-size:13px;line-height:1.5;overflow-x:auto;white-space:pre}
+.agent-out code{background:none;padding:0;color:inherit;font-size:inherit}
+.agents-note{font-size:13px;color:var(--fg-3)}
+.cell .brew-cmd{margin-top:4px}
 .brew-or{margin-top:22px;font-size:14px;color:var(--fg-3)}
 .brew .fine code{white-space:nowrap}
 @media (max-width:520px){.brew-cmd{padding-left:12px}.brew-cmd code{font-size:12.5px}}
@@ -444,9 +448,9 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
       "applicationCategory": "UtilitiesApplication",
       "applicationSubCategory": "Disk space analyzer",
       "operatingSystem": "macOS 14 Sonoma or later",
-      "softwareVersion": "1.0.5",
+      "softwareVersion": "1.1.0",
       "datePublished": "2026-09-30",
-      "dateModified": "2026-10-07",
+      "dateModified": "2026-10-11",
       "license": "https://opensource.org/licenses/MIT",
       "isAccessibleForFree": true,
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "description": "Free forever. All features included. No Pro tier, subscription, trial or in-app purchases." },
@@ -464,6 +468,7 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
         "Developer cleanup: DerivedData, node_modules, package caches",
         "Menu bar monitor with a free-space ring, 7-day trend, and local low-space alerts",
         "Trash mode and fast permanent-delete mode",
+        "MCP server and command line tool for AI agents (Claude Code, Claude Desktop, Cursor, Codex)",
         "Local only: no account, ads or tracking",
         "100% free with every feature unlocked: no Pro tier, subscription or lifetime fee"
       ]
@@ -547,6 +552,7 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
     </a>
     <nav aria-label="Primary">
       <a href="#features">Features</a>
+<a href="#agents">AI agents</a>
       <a href="#menubar">Menu bar</a>
       <a href="#duplicates">Duplicates</a>
       <a href="#safety">Safety</a>
@@ -606,6 +612,45 @@ footer{padding:24px 0;border-top:1px solid var(--line);font-size:14px;color:var(
       <div><strong class="num" data-to="150" data-suffix="+">0+</strong><span>known locations with a safety verdict</span></div>
       <div><strong>$0</strong><span>no Pro tier, no subscription, no trial</span></div>
       <div><strong>MIT</strong><span>open source, builds in one command</span></div>
+    </div>
+  </section>
+
+  <section class="section" id="agents">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Your AI agent can use it too.</h2>
+        <p>Ask Claude Code, Claude Desktop, Cursor or Codex what is filling your disk. Headroom answers with real sizes and a safety verdict for every item, through a command line tool and an MCP server. Nothing to configure: the app carries its own instructions for agents.</p>
+      </div>
+      <div class="bento">
+        <article class="cell cell-wide cell-accent reveal">
+          <h3>One command, a straight answer</h3>
+          <p>The same scanner and the same safety rules as the app, as JSON an agent can act on.</p>
+          <pre class="agent-out" aria-label="Example: the cleanup command and its answer"><code>$ headroom cleanup ~
+{
+  "total_reclaimable": "38.9 GB",
+  "candidates": [
+    { "path": "~/dev/shop/node_modules",
+      "size": "23.6 GB", "safety": "safe" },
+    { "path": "~/Library/Developer/Xcode/DerivedData",
+      "size": "11.2 GB", "safety": "safe" },
+    { "path": "~/Library/Caches/Homebrew",
+      "size": "4.1 GB", "safety": "usually_safe" }
+  ]
+}</code></pre>
+        </article>
+        <article class="cell reveal d1">
+          <svg class="ic-lg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 9 3 3-3 3M13 15h4"/></svg>
+          <h3>Ten tools, nine read-only</h3>
+          <p>Scan, list, largest files, cleanup candidates, duplicates and a verdict for any path. The only write moves items to the Trash, refuses anything marked <em>Do not delete</em>, and the agent is told to ask you first.</p>
+        </article>
+        <article class="cell reveal d2">
+          <svg class="ic-lg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7V3M15 7V3M6 7h12v4a6 6 0 0 1-12 0zM12 17v4"/></svg>
+          <h3>Register once, or not at all</h3>
+          <p>Agents that run shell commands find the tool by themselves. MCP clients add the server once:</p>
+          <div class="brew-cmd"><code id="mcp-cmd">claude mcp add headroom -- /Applications/Headroom.app/Contents/MacOS/Headroom --mcp</code><button class="brew-copy" type="button" data-copy="mcp-cmd" aria-label="Copy the MCP registration command">Copy</button></div>
+          <p class="agents-note">Direct download and Homebrew builds. The App Store build is sandboxed and cannot offer it.</p>
+        </article>
+      </div>
     </div>
   </section>
 
