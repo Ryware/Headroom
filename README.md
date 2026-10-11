@@ -15,8 +15,8 @@
 <p align="center">
   <a href="https://github.com/Ryware/Headroom/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/Ryware/Headroom/build.yml?branch=main&label=build&logo=github" alt="Build status"></a>
   <a href="https://github.com/Ryware/Headroom/actions/workflows/build.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FRyware/Headroom%2Fbadges%2Ftests.json&cacheSeconds=300" alt="Unit tests"></a>
-  <a href="https://github.com/Ryware/Headroom/actions/workflows/build.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FRyware/Headroom%2Fbadges%2Fcoverage.json&cacheSeconds=300" alt="Test coverage"></a>
-  <a href="https://github.com/Ryware/Headroom/actions/workflows/build.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FRyware/Headroom%2Fbadges%2Fcore-coverage.json&cacheSeconds=300" alt="Engine and model coverage"></a>
+  <a href="https://github.com/Ryware/Headroom/actions/workflows/build.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FRyware/Headroom%2Fbadges%2Ftotal-coverage.json&cacheSeconds=300" alt="Test coverage"></a>
+  <a href="https://github.com/Ryware/Headroom/actions/workflows/build.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FRyware/Headroom%2Fbadges%2Fcoverage.json&cacheSeconds=300" alt="Engine and model coverage"></a>
   <br>
   <a href="https://github.com/Ryware/Headroom/releases/latest"><img src="https://img.shields.io/github/v/release/Ryware/Headroom?label=release&sort=semver" alt="Latest release"></a>
   <a href="https://github.com/Ryware/Headroom/releases"><img src="https://img.shields.io/github/downloads/Ryware/Headroom/total?label=downloads" alt="Downloads"></a>
