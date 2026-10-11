@@ -68,6 +68,7 @@ private let steps: [IntroStep] = [
 ]
 
 struct IntroView: View {
+    static var pageCount: Int { steps.count }
     @Environment(\.dismiss) private var dismiss
     @State var page: Int = 0
     @State private var revealed = 0            // bullets shown on the current page

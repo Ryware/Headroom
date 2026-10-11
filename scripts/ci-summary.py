@@ -44,8 +44,8 @@ for f in data:
 
 pct = lambda c, n: (100.0 * c / n) if n else 0.0
 overall, core_pct = pct(*tot), pct(*core)
-# The public badge reports the logic layer (Engine + Models). SwiftUI views are not unit tested;
-# their number is still published (total-coverage.json) and listed in the job summary.
+# Two badges: all code (total-coverage.json) and the logic layer (coverage.json, Engine + Models).
+# The views are covered by render smoke tests, so the logic number is the one that reflects assertions.
 badge("coverage.json", "coverage (engine + models)", f"{core_pct:.0f}%", color(core_pct))
 badge("total-coverage.json", "coverage (all code)", f"{overall:.0f}%", color(overall))
 
